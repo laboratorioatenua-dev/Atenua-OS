@@ -989,15 +989,7 @@ function secCroqui(it,opts={}){
   const bg=h("canvas",{width:W0,height:H0,class:"cq-bg","aria-hidden":"true"});
   const fg=h("canvas",{width:W0,height:H0,class:"cq-fg","aria-label":"Área de desenho do croqui"});
   const box=h("div",{class:"cq"},bg,fg);
-  function desenhaBase(){
-    const c=bg.getContext("2d"); c.fillStyle="#fff"; c.fillRect(0,0,W0,H0);
-    if(!d.tipologia){ c.fillStyle="#8aa0a6"; c.font="500 28px sans-serif"; c.textAlign="center"; c.fillText("Escolha a tipologia para ter o desenho de base",W0/2,H0/2); return; }
-    const L=+d.largura||1500, A=+d.altura||1200, ar=Math.max(.3,Math.min(3.5,L/A));
-    let bw=W0*.72, bh=bw/ar; if(bh>H0*.72){ bh=H0*.72; bw=bh*ar; }
-    const t=document.createElement("canvas"); t.width=Math.round(bw); t.height=Math.round(bh);
-    drawTipo(t,d.tipologia,{ink:"#9db2b8",glass:"#eef6f8"});
-    c.drawImage(t,(W0-bw)/2,(H0-bh)/2);
-  }
+  function desenhaBase(){ const c=bg.getContext("2d"); c.fillStyle="#fff"; c.fillRect(0,0,W0,H0); }
   function desenhaTracos(){
     const c=fg.getContext("2d"); c.clearRect(0,0,W0,H0); c.lineCap="round"; c.lineJoin="round";
     for(const s of st){
@@ -1043,7 +1035,7 @@ function secCroqui(it,opts={}){
   const inp=h("input",{type:"file",accept:"image/*",capture:"environment",id:"cam-croqui",style:"position:absolute;opacity:0;width:1px;height:1px"});
   inp.addEventListener("change",async()=>{ const f=inp.files&&inp.files[0]; if(!f) return; try{ const p=await processarFoto(f,"Croqui"); it.croqui={tipo:"foto",...p}; mexeu(); render(); toast("Foto do croqui salva"); }catch(e){ toast("Não consegui abrir essa imagem. Tente outra vez."); } });
   const sec=h("section",{class:"sec",id:"sec-croqui"},h("h3",{},opts.titulo||"Croqui da janela vendida"),
-    h("div",{class:"small muted"},opts.nota||"Opcional. Desenhe com o dedo por cima do desenho da tipologia: medidas de cada folha, lado da fechadura, fixos, bandeiras. Use \"Texto / cota\" e toque onde quer escrever."));
+    h("div",{class:"small muted"},opts.nota||"Opcional. Desenhe com o dedo: medidas de cada folha, lado da fechadura, fixos, bandeiras. Use \"Texto / cota\" e toque onde quer escrever."));
   if(it.croqui&&it.croqui.tipo==="foto"){
     sec.append(h("img",{src:it.croqui.data,alt:"Foto do croqui",style:"border-radius:8px;border:1px solid var(--line)"}),
       h("div",{class:"row"},h("button",{type:"button",onclick:()=>{ it.croqui=null; mexeu(); render(); }},"Trocar a foto por desenho no app")));
@@ -1228,7 +1220,7 @@ function telaRItem(main){
     h("div",{},h("b",{},"Ambiente: "),v.ambiente),h("div",{},h("b",{},"Desenho visto pelo lado: "),v.vista),
     h("div",{},h("b",{},"Obs. cliente: "),v.obsCliente),h("div",{},h("b",{},"Obs. Atenua: "),v.obsAtenua),
     it.croqui&&it.croqui.tipo==="foto"?h("figure",{style:"margin:0"},h("img",{src:it.croqui.data,alt:"Foto do croqui do vendedor",style:"border-radius:8px"}),h("figcaption",{class:"small muted"},"Croqui do vendedor (foto)")):null));
-  const cq=secCroqui(r,{titulo:"Croqui do remedidor",nota:it.croqui&&it.croqui.tipo==="desenho"?"Começa com o croqui do vendedor. Corrija por cima: este é o croqui que vale para o projeto.":"Desenhe o croqui por cima da tipologia. Este é o croqui que vale para o projeto."});
+  const cq=secCroqui(r,{titulo:"Croqui do remedidor",nota:it.croqui&&it.croqui.tipo==="desenho"?"Começa com o croqui do vendedor. Corrija por cima: este é o croqui que vale para o projeto.":"Desenhe o croqui. Este é o croqui que vale para o projeto."});
   renderSchema(REMED,r.campos,main,{trav:r.travados||null,conf:r.conferidos||(r.conferidos=[]),origem:"da OS",onChange:f=>{ if(["tipologia","largura","altura"].includes(f.k)) cq.atualizarBase(); if(f.k==="fixacao"&&r.campos.fixacao==="Sobreposta"&&r.campos.acrescimo!=="Sim"){ r.campos.acrescimo="Sim"; const sy=scrollY; render(); scrollTo(0,sy); toast("Sobreposta: marquei que tem acréscimo. Informe quanto em Medidas."); } }});
   main.insertBefore(cq,$("#sec-rmed",main));
   const fotos=h("section",{class:"sec",id:"sec-fotos"},h("h3",{},"Fotos com trena"));
@@ -1630,7 +1622,7 @@ function preencherExemplo(){
   Object.assign(it1.campos,resto,{ambiente:"Quarto do bebê",volt:"220v",ponto:"Direito",obsAtenua:"Combinado com a cliente que pode ser necessário colocar mão francesa, se o projeto indicar. Já está alinhado."});
   Object.assign(it2.campos,resto,{ambiente:"Sala"});
   for(const it of OS.itens){ it.fotos={frente:fotoExemplo("Vão inteiro, de frente"),largura:fotoExemplo("Trena na largura","h"),altura:fotoExemplo("Trena na altura","v"),piso:fotoExemplo("Piso / soleira do vão","p")}; }
-  it1.croqui={tipo:"desenho",exemploStrokes:true,strokes:[{tool:"text",x:330,y:70,t:"1025"},{tool:"text",x:570,y:70,t:"1025"},{tool:"text",x:450,y:30,t:"caixa da persiana em cima"},{tool:"text",x:450,y:575,t:"motor lado direito"},{tool:"pen",pts:[[700,480],[760,520],[740,470]]}]};
+  it1.croqui={tipo:"desenho",exemploStrokes:true,strokes:[{tool:"pen",pts:[[210,100],[690,100],[690,500],[210,500],[210,100]]},{tool:"pen",pts:[[450,100],[450,500]]},{tool:"pen",pts:[[300,300],[400,300]]},{tool:"pen",pts:[[600,300],[500,300]]},{tool:"text",x:330,y:70,t:"1025"},{tool:"text",x:570,y:70,t:"1025"},{tool:"text",x:450,y:30,t:"caixa da persiana em cima"},{tool:"text",x:450,y:575,t:"motor lado direito"},{tool:"pen",pts:[[700,480],[760,520],[740,470]]}]};
   { const sc=secCroqui(it1); sc.atualizarBase(); }
   S.view="resumo"; salvar(); render(); scrollTo(0,0); toast("Exemplo montado a partir de um pedido com 2 peças");
 }
