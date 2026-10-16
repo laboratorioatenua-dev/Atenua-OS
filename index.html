@@ -104,6 +104,16 @@ textarea{min-height:80px;resize:vertical}
 .cq-txt{position:absolute;display:flex;gap:4px;background:var(--surface);padding:4px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.25);width:min(260px,90%)}
 .cq-txt input{min-height:36px;padding:6px 8px}.cq-txt button{min-height:36px;padding:4px 10px}
 .cq-tools button{min-height:40px}
+.cq-fullbtn{font-weight:700;color:var(--accent)}
+.cq-dica{display:none;color:var(--muted)}
+.cq-wrap.cq-full{position:fixed;inset:0;z-index:1000;background:var(--bg);padding:8px;display:flex;flex-direction:column;gap:6px;overflow:hidden}
+.cq-wrap.cq-full>*{flex:none}
+.cq-wrap.cq-full .cq{margin:0 auto}
+.cq-wrap.cq-full .cq-tools button{min-height:36px;padding:4px 10px}
+.cq-wrap.cq-full .cq-tools{flex-wrap:wrap;gap:6px}
+.cq-wrap.cq-full .cq-tools button{white-space:nowrap;flex:0 0 auto}
+@media (orientation:portrait){.cq-wrap.cq-full .cq-dica{display:block;text-align:center}}
+body.noscroll{overflow:hidden}
 .chip.neutral{background:var(--surface-2);color:var(--muted)} .chip.info{background:var(--accent-soft);color:var(--accent)} .chip.bad{background:var(--danger-soft);color:var(--danger)}
 .warnbox{border-color:var(--warn);background:var(--warn-soft)}
 .aviso{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:12px}
@@ -1040,9 +1050,22 @@ function secCroqui(it,opts={}){
     sec.append(h("img",{src:it.croqui.data,alt:"Foto do croqui",style:"border-radius:8px;border:1px solid var(--line)"}),
       h("div",{class:"row"},h("button",{type:"button",onclick:()=>{ it.croqui=null; mexeu(); render(); }},"Trocar a foto por desenho no app")));
   } else {
-    sec.append(h("div",{class:"seg cq-tools"},ferr,
+    const wrap=h("div",{class:"cq-wrap"});
+    const dica=h("div",{class:"cq-dica small"},"Dica: gire o celular para ter mais espaço.");
+    const btnFull=h("button",{type:"button",class:"cq-fullbtn"},"Tela cheia");
+    const ajustar=()=>{ if(!wrap.classList.contains("cq-full")){ box.style.width=""; return; } box.style.width=""; const top=box.getBoundingClientRect().top; box.style.width=Math.floor(Math.min(innerWidth-16,(innerHeight-top-8)*1.5))+"px"; };
+    addEventListener("resize",()=>setTimeout(ajustar,60));
+    const sair=()=>{ wrap.classList.remove("cq-full"); box.style.width=""; document.body.classList.remove("noscroll"); btnFull.textContent="Tela cheia"; if(document.fullscreenElement) document.exitFullscreen().catch(()=>{}); };
+    btnFull.addEventListener("click",()=>{
+      if(wrap.classList.contains("cq-full")) return sair();
+      wrap.classList.add("cq-full"); document.body.classList.add("noscroll"); btnFull.textContent="Concluir desenho";
+      ajustar(); if(wrap.requestFullscreen) wrap.requestFullscreen().then(()=>setTimeout(ajustar,80)).catch(()=>{});
+    });
+    document.addEventListener("fullscreenchange",()=>{ if(!document.fullscreenElement&&wrap.classList.contains("cq-full")) sair(); });
+    wrap.append(h("div",{class:"seg cq-tools"},ferr,
       h("button",{type:"button",onclick:()=>{ st.pop(); desenhaTracos(); guardar(); }},"Desfazer"),
-      h("button",{type:"button",class:"danger",onclick:()=>{limparConf.hidden=false;}},"Limpar")),limparConf,box,
+      h("button",{type:"button",class:"danger",onclick:()=>{limparConf.hidden=false;}},"Limpar"),btnFull),limparConf,dica,box);
+    sec.append(wrap,
       h("div",{class:"row"},h("label",{class:"btn",for:"cam-croqui",style:"position:relative"},"Ou fotografar um croqui em papel",inp)));
   }
   desenhaBase(); desenhaTracos();
