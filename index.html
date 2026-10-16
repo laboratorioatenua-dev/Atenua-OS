@@ -77,6 +77,8 @@ textarea{min-height:80px;resize:vertical}
 .shot.has{border-style:solid;border-color:var(--ok)}
 .shot.has .cap{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.62);color:#fff;font-size:12px;padding:4px 6px;text-align:left}
 .shot input{position:absolute;opacity:0;width:1px;height:1px}
+.shot-acoes{display:flex;gap:6px;margin-top:6px}
+.btn-mini{flex:1;text-align:center;font-size:13px;font-weight:600;padding:8px 4px;border:1px solid var(--line);border-radius:8px;cursor:pointer;color:var(--accent);background:var(--card,transparent)}
 .shot .req{font-size:11px;color:var(--muted);position:relative}
 .cam{width:28px;height:28px;position:relative;opacity:.7}
 .item{display:flex;gap:12px;align-items:flex-start;border-top:1px solid var(--line);padding-top:12px}
@@ -543,6 +545,7 @@ const PEDIDO = [
  ]},
 ];
 
+const TOL_MM = 40; // tolerância de medidas (vendedor x remedidor e OS x pedido)
 const FECHOS = ["Concha cega","Concha com trava e mola","Concha com trava sem mola","Concha leve toque","Cremona","Outro"];
 const ITEM = [
  {id:"ide",titulo:"Identificação",pg:0,campos:[
@@ -817,25 +820,28 @@ function marcarErros(errs){
 
 /* ---------- fotos ---------- */
 function loadImg(file){ return new Promise((res,rej)=>{ const u=URL.createObjectURL(file); const i=new Image(); i.onload=()=>{res(i); setTimeout(()=>URL.revokeObjectURL(u),1000)}; i.onerror=rej; i.src=u; }); }
-async function processarFoto(file,legenda){
+async function processarFoto(file,legenda,galeria){
   const [img,pos]=await Promise.all([loadImg(file),getPos()]);
   let w=img.naturalWidth,hh=img.naturalHeight; const s=Math.min(1,1280/Math.max(w,hh)); w=Math.round(w*s); hh=Math.round(hh*s);
   const cv=document.createElement("canvas"); cv.width=w; cv.height=hh; const x=cv.getContext("2d"); x.drawImage(img,0,0,w,hh);
   const ts=new Date();
-  carimbo(x,w,hh,`${legenda} · ${fmtDT(ts)} · ${pos.lat!=null?gpsTxt(pos):"sem localização"} · ${S.user.nome}`);
-  return {data:cv.toDataURL("image/jpeg",.72),w,h:hh,ts:ts.toISOString(),gps:pos.lat!=null?pos:null,gpsErro:pos.erro||null,por:S.user.nome};
+  carimbo(x,w,hh,`${legenda} · ${galeria?"da galeria, anexada "+fmtDT(ts):fmtDT(ts)} · ${pos.lat!=null?gpsTxt(pos):"sem localização"} · ${S.user.nome}`);
+  return {data:cv.toDataURL("image/jpeg",.72),w,h:hh,ts:ts.toISOString(),gps:pos.lat!=null?pos:null,gpsErro:pos.erro||null,por:S.user.nome,galeria:!!galeria,arquivoEm:galeria&&file.lastModified?new Date(file.lastModified).toISOString():null};
 }
 function carimbo(x,w,hh,txt){ const fs=Math.max(13,Math.round(w/52)); x.font=`600 ${fs}px sans-serif`; x.fillStyle="rgba(0,0,0,.62)"; x.fillRect(0,hh-fs*1.9,w,fs*1.9); x.fillStyle="#fff"; x.textBaseline="middle"; x.fillText(txt,fs*.6,hh-fs*.95,w-fs*1.2); }
 function fotoSlot(it,key,legenda,onSet,opcional){
   const f=key.startsWith("extra")?it.extras[+key.slice(5)]:it.fotos[key];
-  const id="cam-"+key;
+  const id="cam-"+key, idg="gal-"+key;
   const inp=h("input",{type:"file",accept:"image/*",capture:"environment",id});
+  const gal=h("input",{type:"file",accept:"image/*",id:idg,style:"position:absolute;opacity:0;width:1px;height:1px"});
   const lab=h("label",{class:"shot"+(f?" has":""),for:id});
-  if(f){ lab.append(h("img",{src:f.data,alt:legenda}),h("span",{class:"cap"},`${legenda} · ${fmtDT(f.ts)}${f.gps?"":" · sem GPS"}`)); }
+  if(f){ lab.append(h("img",{src:f.data,alt:legenda}),h("span",{class:"cap"},`${legenda} · ${f.galeria?"galeria · ":""}${fmtDT(f.ts)}${f.gps?"":" · sem GPS"}`)); }
   else { lab.append(camIcon(),h("span",{class:"cap"},legenda),h("span",{class:"req"},opcional?"Opcional":"Obrigatória")); }
   lab.append(inp);
-  inp.addEventListener("change",async()=>{ const file=inp.files&&inp.files[0]; if(!file) return; toast("Processando foto…"); try{ const p=await processarFoto(file,legenda); onSet(p); mexeu(); render(); if(!p.gps) toast(p.gpsErro||"Foto salva sem localização"); else toast("Foto salva"); }catch(e){ toast("Não consegui abrir essa imagem. Tente outra vez."); } });
-  return h("div",{class:"field",id:"f-foto-"+key},lab,h("div",{class:"err"}));
+  const usar=galeria=>async e=>{ const el=e.target; const file=el.files&&el.files[0]; if(!file) return; toast("Processando foto…"); try{ const p=await processarFoto(file,legenda,galeria); onSet(p); mexeu(); render(); if(!p.gps) toast(p.gpsErro||"Foto salva sem localização"); else toast(galeria?"Foto da galeria salva":"Foto salva"); }catch(err){ toast("Não consegui abrir essa imagem. Tente outra vez."); } };
+  inp.addEventListener("change",usar(false)); gal.addEventListener("change",usar(true));
+  const acoes=h("div",{class:"shot-acoes"},h("label",{for:id,class:"btn-mini"},f?"Tirar de novo":"Tirar foto"),h("label",{for:idg,class:"btn-mini",style:"position:relative"},"Da galeria",gal));
+  return h("div",{class:"field",id:"f-foto-"+key},lab,acoes,h("div",{class:"err"}));
 }
 function camIcon(){ const ns="http://www.w3.org/2000/svg"; const s=document.createElementNS(ns,"svg"); s.setAttribute("viewBox","0 0 24 24"); s.setAttribute("class","cam"); s.innerHTML='<path d="M4 7h3l2-2.5h6L17 7h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12.5" r="3.6" fill="none" stroke="currentColor" stroke-width="1.6"/>'; return s; }
 
@@ -964,7 +970,7 @@ function telaItem(main){
   renderSchema(ITEM,it.campos,main,{trav:it.travados||null,onChange:f=>{ if(["tipologia","largura","altura"].includes(f.k)) cq.atualizarBase(); if(f.k==="fixacao"&&it.campos.fixacao==="Sobreposta"&&it.campos.acrescimo!=="Sim"){ it.campos.acrescimo="Sim"; const sy=scrollY; render(); scrollTo(0,sy); toast("Sobreposta: marquei que tem acréscimo. Informe quanto em Medidas."); } }});
   main.insertBefore(cq,$("#sec-med",main));
   const fotos=h("section",{class:"sec",id:"sec-fotos"},h("h3",{},"Fotos"),
-    h("div",{class:"small muted"},"Tire as fotos na hora, pelo celular. Cada foto recebe data, hora, local e o seu nome."));
+    h("div",{class:"small muted"},"Tire na hora ou escolha da galeria. Cada foto recebe data, hora, local e o seu nome; as da galeria ficam marcadas como \"da galeria\"."));
   const g=h("div",{class:"shots"});
   for(const f of FOTOS) g.append(fotoSlot(it,f.k,f.l,p=>{ it.fotos[f.k]=p; },!f.obr));
   it.extras.forEach((x,i)=>g.append(fotoSlot(it,"extra"+i,`Foto extra ${i+1}`,p=>{ it.extras[i]=p; },true)));
@@ -1122,13 +1128,13 @@ function valorTxt(d,k){ const f=F(k); if(!f){ const v=d[k]; return Array.isArray
 const norm=s=>String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/\s+/g,"");
 function comparar(it){
   const v=it.campos, r=(it.remed||{}).campos||{}, rows=[];
-  for(const k of ["largura","altura"]){ const dv=Math.abs((+r[k]||0)-(+v[k]||0)); const sg=(+r[k]||0)-(+v[k]||0); rows.push({k,l:F(k).l,v:`${v[k]} mm`,r:`${r[k]} mm`,ok:dv<=50,dif:sg,nota:dv?`diferença de ${(dv/10).toLocaleString("pt-BR",{maximumFractionDigits:1})} cm`:"igual"}); }
+  for(const k of ["largura","altura"]){ const dv=Math.abs((+r[k]||0)-(+v[k]||0)); const sg=(+r[k]||0)-(+v[k]||0); rows.push({k,l:F(k).l,v:`${v[k]} mm`,r:`${r[k]} mm`,ok:dv<=TOL_MM,dif:sg,nota:dv?`diferença de ${(dv/10).toLocaleString("pt-BR",{maximumFractionDigits:1})} cm`:"igual"}); }
   for(const k of ["folgaL","folgaA"]){ const a=valorTxt(v,k), b=valorTxt(r,k); if(a||b) rows.push({k,l:F(k).l,v:a?a+" mm":"sem acréscimo",r:b?b+" mm":"sem acréscimo",ok:true,info:true}); }
   for(const k of CMP_CAMPOS){ const a=valorTxt(v,k), b=valorTxt(r,k); if(!a&&!b) continue; rows.push({k,l:F(k).l,v:a||"-",r:b||"-",ok:norm(a)===norm(b)}); }
   return rows;
 }
 function tabelaComparacao(o){
-  const sec=h("section",{class:"card"},h("h2",{},"Vendedor x remedidor"),h("div",{class:"small muted"},"Medidas: até 5 cm de diferença é normal. Produto, cor, linha, vidro e instalação: qualquer diferença aparece em vermelho."));
+  const sec=h("section",{class:"card"},h("h2",{},"Vendedor x remedidor"),h("div",{class:"small muted"},`Medidas: até ${TOL_MM} mm de diferença é normal. Produto, cor, linha, vidro e instalação: qualquer diferença aparece em vermelho.`));
   o.itens.forEach((it,i)=>{
     const rows=comparar(it); const nBad=rows.filter(r=>!r.ok).length;
     sec.append(h("div",{class:"row",style:"margin-top:6px"},h("h3",{},`Item ${i+1} · ${it.campos.ambiente}`),h("div",{class:"sp"}),nBad?h("span",{class:"chip bad dot"},`${nBad} divergência${nBad>1?"s":""}`):h("span",{class:"chip ok dot"},"Confere")));
@@ -1366,7 +1372,7 @@ function telaConferencia(main){
   main.append(h("div",{class:"note"},"Confira tudo antes de finalizar. Para corrigir, volte ao item ou aos dados do pedido."));
   // conferência automática com o pedido de venda
   let res=null;
-  if(o.pedidoVenda&&window.ConferenciaPedido){ try{ res=ConferenciaPedido.conferir(o.pedidoVenda.dados,o); }catch(e){ console.error(e); } }
+  if(o.pedidoVenda&&window.ConferenciaPedido){ try{ res=ConferenciaPedido.conferir(o.pedidoVenda.dados,o,{toleranciaMM:TOL_MM}); }catch(e){ console.error(e); } }
   const problemas=res?res.linhas.filter(l=>l.status==="diverge"||l.status==="falta"):[];
   // prazo contado de outro marco não trava: há vendas medidas antes de fechar o pedido
   const avisosPrazo=res?res.bloqueios.filter(b=>/prazo/i.test(b)):[];
