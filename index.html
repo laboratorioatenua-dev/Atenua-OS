@@ -571,9 +571,9 @@ const ITEM = [
   {k:"corBrilho",l:"Fosco ou brilhante",t:"radio",op:["Fosco","Brilhante"],w:1,pdf:false},
   {k:"cor",l:"Cor da esquadria",t:"calc",opt:true},
   {k:"posFolhas",l:"Posição das folhas",t:"text",list:["Padrão"],w:1},
-  {k:"fecho",l:"Fecho",t:"radio",op:FECHOS},
-  {k:"fechoOutro",l:"Especifique o fecho",t:"text",se:d=>d.fecho==="Outro"},
-  {k:"concha",l:"Fecho",t:"hidden",opt:true,pdf:false},
+  {k:"fecho",l:"Fecho",t:"radio",op:FECHOS,pdf:false},
+  {k:"fechoOutro",l:"Especifique o fecho",t:"text",se:d=>d.fecho==="Outro",pdf:false},
+  {k:"concha",l:"Fecho",t:"hidden",opt:true,w:1},
   {k:"pintExt",l:"Pintura externa diferente",t:"yn",w:1},
   {k:"ralExt",l:"RAL externo",t:"text",w:1,se:sim("pintExt")},
  ]},
@@ -1316,7 +1316,7 @@ function aplicarPedidoVenda(p,arquivo){
   OS.pedido={}; OS.travados=[];
   for(const [k,v] of Object.entries(r.pedido)) if(v!==""&&v!=null){ OS.pedido[k]=v; OS.travados.push(k); }
   OS.itens=r.itens.map(x=>{ const it=novoItem(); it.origem=x.origem; it.travados=[];
-    const cp=x.campos.cor?corPartes(x.campos.cor):{}; const campos={...x.campos,...cp,...fechoDe(x.campos.concha)}; if(cp.corTipo) campos.cor=corTxt(campos);
+    const cp=x.campos.cor?corPartes(x.campos.cor):{}; const campos={...x.campos,...cp,...fechoDe(x.campos.concha)}; if(cp.corTipo) campos.cor=corTxt(campos); if(campos.fecho) campos.concha=fechoTxt(campos);
     for(const [k,v] of Object.entries(campos)) if(v!==""&&v!=null){ it.campos[k]=v; if(TRAVA_ITEM.includes(k)&&!(k==="tipologia"&&v==="Outra")) it.travados.push(k); }
     return it; });
   OS.pedidoVenda={arquivo,lidoEm:new Date().toISOString(),por:S.user.nome,dados:p};
