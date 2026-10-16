@@ -104,6 +104,7 @@ textarea{min-height:80px;resize:vertical}
 .cq-txt{position:absolute;display:flex;gap:4px;background:var(--surface);padding:4px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.25);width:min(260px,90%)}
 .cq-txt input{min-height:36px;padding:6px 8px}.cq-txt button{min-height:36px;padding:4px 10px}
 .cq-tools button{min-height:40px}
+#sync{font-size:11px;margin-right:8px;white-space:nowrap}
 .cq-fullbtn{font-weight:700;color:var(--accent)}
 .cq-dica{display:none;color:var(--muted)}
 .cq-wrap.cq-full{position:fixed;inset:0;z-index:1000;background:var(--bg);padding:8px;display:flex;flex-direction:column;gap:6px;overflow:hidden}
@@ -656,8 +657,88 @@ const Store = {
   async set(k,v){ try{ const db=await this.open(); db.transaction("kv","readwrite").objectStore("kv").put(v,k); }catch(e){} },
 };
 let saveT=null;
-function salvar(){ clearTimeout(saveT); saveT=setTimeout(()=>Store.set("estado",JSON.parse(JSON.stringify({user:S.user,view:S.view,editItem:S.editItem,osId:OS&&OS.id,lista:LISTA}))),400); }
+function salvarLocal(){ Store.set("estado",JSON.parse(JSON.stringify({user:S.user,token:S.token||null,view:S.view,editItem:S.editItem,osId:OS&&OS.id,lista:LISTA,pendentes:[...SYNC.pend]}))); }
+function salvar(){ clearTimeout(saveT); saveT=setTimeout(()=>{ marcarAlteradas(); salvarLocal(); },400); }
 function mexeu(){ if(OS){ OS.atualizadaEm=new Date().toISOString(); if(OS.status==="rascunho") OS.emitida=null; } salvar(); }
+
+/* ---------- nuvem: guarda as OS no servidor (Google Planilha + Drive) ---------- */
+const SERVIDOR = "";
+const NUVEM = /^https?:\/\//.test(SERVIDOR);
+const SYNC = { pend:new Set(), base:new Map(), estado:"ok", timer:null, puxadoEm:0, puxando:false };
+async function api(acao,dados={}){
+  const r=await fetch(SERVIDOR,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({acao,token:S.token||null,...dados})});
+  if(!r.ok) throw new Error("Servidor respondeu "+r.status);
+  const j=await r.json();
+  if(j.erro){ const e=new Error(j.erro); e.codigo=j.codigo; throw e; }
+  return j;
+}
+const vazia=o=>o.status==="rascunho"&&!o.pedidoVenda&&!o.itens.length;
+function marcarAlteradas(){
+  if(!NUVEM||!S.token) return;
+  for(const o of LISTA){
+    if(vazia(o)) continue;
+    const s=JSON.stringify(o);
+    if(!SYNC.base.has(o.id)){ SYNC.base.set(o.id,s); if(!o._nuvem) SYNC.pend.add(o.id); continue; }
+    if(SYNC.base.get(o.id)!==s){ SYNC.base.set(o.id,s); SYNC.pend.add(o.id); }
+  }
+  if(SYNC.pend.size) agendarEnvio();
+}
+function agendarEnvio(ms=2500){ clearTimeout(SYNC.timer); SYNC.timer=setTimeout(enviar,ms); }
+async function enviar(){
+  if(!NUVEM||!S.token||!SYNC.pend.size) return;
+  if(SYNC.estado==="enviando") return agendarEnvio();
+  SYNC.estado="enviando"; mostrarSync();
+  try{
+    for(const id of [...SYNC.pend]){
+      const o=LISTA.find(x=>x.id===id); if(!o||vazia(o)){ SYNC.pend.delete(id); continue; }
+      const r=await api("salvar",{os:{...o,_nuvem:undefined}});
+      if(r.conflito&&r.os){ Object.assign(o,r.os,{_nuvem:true}); SYNC.base.set(o.id,JSON.stringify(o)); toast(`O pedido ${o.pedido.numPedido||""} foi alterado em outro aparelho. Carreguei a versão mais nova.`); if(OS===o) render(); }
+      else { o._nuvem=true; SYNC.base.set(o.id,JSON.stringify(o)); }
+      SYNC.pend.delete(id);
+    }
+    SYNC.estado="ok";
+  }catch(e){
+    console.error(e); SYNC.estado=navigator.onLine===false||e instanceof TypeError?"offline":"erro";
+    if(e.codigo==="sessao") return sessaoExpirada();
+    agendarEnvio(30000);
+  }
+  salvarLocal(); mostrarSync();
+}
+async function puxar(forcar){
+  if(!NUVEM||!S.token||SYNC.puxando) return;
+  if(!forcar&&Date.now()-SYNC.puxadoEm<15000) return;
+  SYNC.puxando=true;
+  try{
+    const {os}=await api("listar");
+    const u=S.user, minhas=r=>u.perfil==="auditoria"||(u.perfil==="remedidor"?(r.remedidor===u.nome||(distribui(u)&&r.remedidor&&r.status==="em_remedicao")):r.vendedor===u.nome);
+    let mudou=false;
+    for(const r of os.filter(minhas)){
+      const local=LISTA.find(o=>o.id===r.id);
+      if(local&&(SYNC.pend.has(r.id)||(local.atualizadaEm||"")>=(r.atualizadaEm||""))) continue;
+      const res=await api("obter",{id:r.id}); if(!res.os) continue;
+      const o={...res.os,_nuvem:true};
+      if(local){ Object.assign(local,o); if(OS===local) OS=local; } else LISTA.push(o);
+      SYNC.base.set(o.id,JSON.stringify(local||o)); mudou=true;
+    }
+    SYNC.puxadoEm=Date.now(); if(SYNC.estado!=="enviando"&&!SYNC.pend.size) SYNC.estado="ok";
+    if(mudou){ salvarLocal(); if(S.view==="lista") render(); }
+  }catch(e){ console.error(e); if(e.codigo==="sessao") sessaoExpirada(); else SYNC.estado="offline"; }
+  SYNC.puxando=false; mostrarSync();
+}
+async function excluirNuvem(o){ if(!NUVEM||!o._nuvem) return; try{ await api("excluir",{id:o.id}); }catch(e){ console.error(e); } }
+async function enviarPdfNuvem(o,blob,nome){
+  if(!NUVEM) return;
+  try{ await enviar(); const b64=await new Promise(res=>{ const fr=new FileReader(); fr.onload=()=>res(String(fr.result).split(",")[1]); fr.readAsDataURL(blob); }); await api("pdf",{id:o.id,nome,base64:b64}); }
+  catch(e){ console.error(e); }
+}
+function sessaoExpirada(){ S.user=null; S.token=null; OS=null; S.view="login"; salvarLocal(); render(); toast("Sua sessão expirou. Entre de novo."); }
+function mostrarSync(){
+  const el=document.getElementById("sync"); if(!el) return;
+  const n=SYNC.pend.size;
+  const [t,c]= SYNC.estado==="enviando"?["Salvando na nuvem…","info"] : n?[SYNC.estado==="offline"?`Sem internet · ${n} para enviar`:`${n} para enviar`,"warn"] : SYNC.estado==="offline"?["Sem internet","warn"]:["Salvo na nuvem","ok"];
+  el.className="chip dot "+c; el.textContent=t;
+}
+addEventListener("online",()=>{ SYNC.estado="ok"; agendarEnvio(500); puxar(true); });
 
 /* ---------- utilidades ---------- */
 const $=(s,el=document)=>el.querySelector(s);
@@ -881,15 +962,21 @@ function topo(){
   return h("header",{class:"top"},h("div",{class:"top-in"},
     h("div",{class:"brand"},"Ordem de Serviço",h("small",{},OS?(n?`Pedido ${n}`:"Novo pedido"):PERFIL_NOME[S.user.perfil])),
     h("div",{class:"sp"}),
-    h("div",{class:"who"},S.user.nome,h("br"),h("button",{type:"button",class:"ghost small",style:"min-height:32px;padding:2px 0;border:0;color:var(--accent)",onclick:()=>{ S.user=null; OS=null; S.view="login"; salvar(); render(); }},"Sair"))));
+    NUVEM?h("span",{id:"sync",class:"chip dot ok",role:"status"},"Salvo na nuvem"):null,
+    h("div",{class:"who"},S.user.nome,h("br"),h("button",{type:"button",class:"ghost small",style:"min-height:32px;padding:2px 0;border:0;color:var(--accent)",onclick:()=>{ if(NUVEM&&SYNC.pend.size&&!confirm("Ainda há OS sem enviar para a nuvem. Se sair agora, elas continuam só neste aparelho até você entrar de novo. Sair mesmo assim?")) return; S.user=null; S.token=null; OS=null; S.view="login"; salvar(); render(); }},"Sair"))));
 }
 function telaLogin(){
   const grupos=["vendedor","remedidor","auditoria"];
   const sel=h("select",{id:"i-vend"},h("option",{value:""},"Escolha seu nome"),grupos.map(g=>h("optgroup",{label:PERFIL_NOME[g]},USUARIOS.filter(u=>u.perfil===g).map(u=>h("option",{value:u.nome},u.nome)))));
   const pin=h("input",{id:"i-pin",type:"password",inputmode:"numeric",autocomplete:"off",placeholder:"PIN"});
   const err=h("div",{class:"err"});
-  const entrar=e=>{ e.preventDefault(); const v=USUARIOS.find(x=>x.nome===sel.value); if(!v){ err.textContent="Escolha seu nome"; return; } if(pin.value!==v.pin){ err.textContent="PIN incorreto"; return; }
-    S.user={nome:v.nome,perfil:v.perfil}; S.view="lista"; OS=null; render(); getPos(); };
+  const entrar=async e=>{ e.preventDefault(); const v=USUARIOS.find(x=>x.nome===sel.value); if(!v){ err.textContent="Escolha seu nome"; return; }
+    if(NUVEM){ const bt=e.target.querySelector("button[type=submit]"); bt.disabled=true; bt.textContent="Entrando…"; err.textContent="";
+      try{ const r=await api("login",{nome:v.nome,pin:pin.value}); S.token=r.token; S.user={nome:r.user.nome,perfil:r.user.perfil}; }
+      catch(x){ err.textContent=x instanceof TypeError?"Sem internet. Para entrar, o celular precisa estar conectado.":x.message; bt.disabled=false; bt.textContent="Entrar"; return; }
+    } else { if(pin.value!==v.pin){ err.textContent="PIN incorreto"; return; } S.user={nome:v.nome,perfil:v.perfil}; }
+    S.view="lista"; OS=null; render(); getPos(); puxar(true); };
+  if(NUVEM&&!telaLogin.carregou){ telaLogin.carregou=true; api("usuarios").then(r=>{ if(r.usuarios&&r.usuarios.length){ USUARIOS.splice(0,USUARIOS.length,...r.usuarios); Store.set("usuarios",r.usuarios); if(S.view==="login") render(); } }).catch(e=>console.error(e)); }
   app.append(h("main",{},h("form",{class:"card login",onsubmit:entrar},
     h("img",{src:LOGO,alt:"Atenua Group"}),
     h("h1",{},"Ordem de Serviço"),
@@ -898,7 +985,7 @@ function telaLogin(){
     h("div",{class:"field"},h("label",{for:"i-pin"},"PIN"),pin),
     err,
     h("button",{class:"primary",type:"submit"},"Entrar"),
-    h("p",{class:"small muted",style:"margin:0"},"Protótipo: o PIN de teste é 1234 para todos."))));
+    NUVEM?null:h("p",{class:"small muted",style:"margin:0"},"Protótipo: o PIN de teste é 1234 para todos."))));
 }
 function statusChip(n){ return n ? h("span",{class:"chip warn dot"},n===1?"Falta 1 item":`Faltam ${n} itens`) : h("span",{class:"chip ok dot"},"Completo"); }
 function tipoTxt(d){ const b=d.tipologia==="Outra"?(d.tipoOutra||"Outra"):(d.tipologia||""); return b+(d.persiana==="Sim"?" com persiana":""); }
@@ -1122,12 +1209,13 @@ function telaLista(main){
     if(distribui(u)&&o.status==="em_remedicao") card.append(repassarUI(o));
     const acoes=h("div",{class:"row"},h("button",{type:"button",class:(u.perfil==="remedidor"&&(o.status==="em_remedicao"||o.status==="pendencias"))||(u.perfil==="auditoria"&&o.status==="divergencia")||(u.perfil==="vendedor"&&o.status==="rascunho")?"primary":"",onclick:()=>abrirOS(o)},
       u.perfil==="remedidor"&&o.status==="pendencias"?"Responder avisos":u.perfil==="remedidor"&&o.status==="em_remedicao"?"Fazer remedição":o.status==="rascunho"&&u.perfil==="vendedor"?"Continuar":"Abrir"));
-    if(u.perfil==="vendedor"&&o.status==="rascunho"){ const conf=h("div",{class:"inline-confirm",hidden:true},"Excluir este rascunho?",h("button",{type:"button",class:"danger",onclick:()=>{ LISTA.splice(LISTA.indexOf(o),1); salvar(); render(); }},"Excluir"),h("button",{type:"button",onclick:()=>{conf.hidden=true;}},"Cancelar"));
+    if(u.perfil==="vendedor"&&o.status==="rascunho"){ const conf=h("div",{class:"inline-confirm",hidden:true},"Excluir este rascunho?",h("button",{type:"button",class:"danger",onclick:()=>{ LISTA.splice(LISTA.indexOf(o),1); SYNC.pend.delete(o.id); excluirNuvem(o); salvar(); render(); }},"Excluir"),h("button",{type:"button",onclick:()=>{conf.hidden=true;}},"Cancelar"));
       acoes.append(h("button",{type:"button",class:"ghost danger",onclick:()=>{conf.hidden=false;}},"Excluir")); card.append(acoes,conf); }
     else card.append(acoes);
     main.append(card);
   }
-  main.append(h("div",{class:"small muted"},`Protótipo: as OS ficam guardadas só neste aparelho. Para testar o fluxo inteiro, saia e entre com outro perfil (vendedor, remedidor, auditoria). ${VERSAO}.`));
+  main.append(h("div",{class:"small muted"},NUVEM?`As OS ficam salvas na nuvem e aparecem em qualquer celular ou computador em que você entrar. ${VERSAO}.`:`Protótipo: as OS ficam guardadas só neste aparelho. Para testar o fluxo inteiro, saia e entre com outro perfil (vendedor, remedidor, auditoria). ${VERSAO}.`));
+  setTimeout(()=>{ mostrarSync(); puxar(); },0);
 }
 function repassarUI(o){
   const sel=h("select",{id:"i-rep-"+o.id},USUARIOS.filter(x=>x.perfil==="remedidor").map(x=>h("option",{value:x.nome,selected:x.nome===o.remedidor?true:null},x.nome)));
@@ -1368,7 +1456,7 @@ function telaAnexar(main){
 }
 function trocarPdfUI(){
   const conf=h("div",{class:"inline-confirm",hidden:true},"Descartar esta OS e anexar outro PDF? O que você já preencheu nela será perdido.",
-    h("button",{type:"button",class:"danger",onclick:()=>{ const i=LISTA.indexOf(OS); if(i>=0) LISTA.splice(i,1); OS=novaOS(); salvar(); S.view="anexar"; render(); scrollTo(0,0); toast("OS descartada. Anexe o PDF certo."); }},"Descartar e anexar outro"),
+    h("button",{type:"button",class:"danger",onclick:()=>{ const i=LISTA.indexOf(OS); if(i>=0) LISTA.splice(i,1); SYNC.pend.delete(OS.id); excluirNuvem(OS); OS=novaOS(); salvar(); S.view="anexar"; render(); scrollTo(0,0); toast("OS descartada. Anexe o PDF certo."); }},"Descartar e anexar outro"),
     h("button",{type:"button",onclick:()=>{conf.hidden=true;}},"Cancelar"));
   return h("div",{},h("button",{type:"button",class:"link",onclick:()=>{conf.hidden=false;}},"Anexei o PDF errado"),conf);
 }
@@ -1451,6 +1539,7 @@ async function emitir(btn){
     else { OS.status="liberada"; OS.liberacao={por:S.user.nome,em:em.em,motivo:"OS sem remedição: liberada para projeto"}; hist(OS,OS.liberacao.motivo); }
   }
   OS.atualizadaEm=em.em; salvar(); S.view="os"; render(); scrollTo(0,0);
+  { const o=OS; setTimeout(()=>{ marcarAlteradas(); enviarPdfNuvem(o,blob,nome); },500); }
   toast(r==="declined"?"Download cancelado. Dá para baixar de novo nesta tela.":`PDF gerado: ${nome}`);
 }
 async function salvarArquivo(blob,nome){
@@ -1653,8 +1742,11 @@ function preencherExemplo(){
 /* ---------- início ---------- */
 (async()=>{
   const r=await Store.get("estado");
-  if(r){ LISTA=r.lista||[]; S.user=r.user||null; S.editItem=r.editItem||null; OS=LISTA.find(o=>o.id===r.osId)||null; S.view=S.user?(r.view||"lista"):"login"; }
+  if(r){ LISTA=r.lista||[]; S.user=r.user||null; S.token=r.token||null; S.editItem=r.editItem||null; OS=LISTA.find(o=>o.id===r.osId)||null; S.view=S.user?(r.view||"lista"):"login"; (r.pendentes||[]).forEach(id=>SYNC.pend.add(id)); }
+  if(NUVEM){ const us=await Store.get("usuarios"); if(us&&us.length) USUARIOS.splice(0,USUARIOS.length,...us); if(S.user&&!S.token){ S.user=null; S.view="login"; } }
+  for(const o of LISTA) if(!SYNC.pend.has(o.id)&&o._nuvem) SYNC.base.set(o.id,JSON.stringify(o));
   render();
+  if(NUVEM&&S.token){ agendarEnvio(800); puxar(true); }
 })();
 </script>
 
