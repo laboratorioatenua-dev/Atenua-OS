@@ -1,0 +1,1640 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0d8fa1"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style></head><body>
+<title>OS Atenua</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap">
+<style>
+/* Layout: uma coluna de formulário (máx. 720px) com barra superior fixa e barra de ação no rodapé, pensada para o celular. */
+:root{
+  --bg:#f3f6f7; --surface:#ffffff; --surface-2:#e8eef0; --fg:#1b2a30; --muted:#5c6f76; --line:#cfdadd;
+  --accent:#0d8fa1; --accent-ink:#ffffff; --accent-soft:#d8f0f3;
+  --ok:#2f7d4f; --ok-soft:#dcefe3; --warn:#9a6400; --warn-soft:#fbecd0; --danger:#b3261e; --danger-soft:#f9dedc;
+  --rosa:#f2a2c4; --verde:#9fd59a; --amarela:#ffe45c;
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f181b; --surface:#172428; --surface-2:#1f3035; --fg:#e4eef0; --muted:#97abb1; --line:#2c4046;
+  --accent:#34bccd; --accent-ink:#06262b; --accent-soft:#163a40;
+  --ok:#7fd39f; --ok-soft:#183427; --warn:#f0b75a; --warn-soft:#3a2c12; --danger:#ff8a80; --danger-soft:#3d1a18;
+  --rosa:#c0678f; --verde:#4f9a49; --amarela:#b39a1f; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f181b; --surface:#172428; --surface-2:#1f3035; --fg:#e4eef0; --muted:#97abb1; --line:#2c4046;
+  --accent:#34bccd; --accent-ink:#06262b; --accent-soft:#163a40;
+  --ok:#7fd39f; --ok-soft:#183427; --warn:#f0b75a; --warn-soft:#3a2c12; --danger:#ff8a80; --danger-soft:#3d1a18;
+  --rosa:#c0678f; --verde:#4f9a49; --amarela:#b39a1f; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.45}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.top-in{max-width:720px;margin:0 auto;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;align-items:center;gap:12px}
+.brand{font-family:var(--f-display);font-weight:700;font-size:22px;letter-spacing:.02em;line-height:1}
+.brand small{display:block;font-family:var(--f-body);font-weight:500;font-size:12px;color:var(--muted);letter-spacing:0}
+.top .sp{flex:1}
+.who{font-size:13px;color:var(--muted);text-align:right;line-height:1.2}
+main{max-width:720px;margin:0 auto;padding-block:16px 120px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:16px}
+h1,h2,h3{font-family:var(--f-display);font-weight:700;text-wrap:balance;margin:0;letter-spacing:.01em}
+h1{font-size:28px} h2{font-size:22px} h3{font-size:19px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.row .sp{flex:1}
+.muted{color:var(--muted)} .small{font-size:13px}
+.note{background:var(--accent-soft);border-radius:8px;padding:10px 12px;font-size:14px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;padding:3px 10px;border-radius:99px;white-space:nowrap}
+.chip.ok{background:var(--ok-soft);color:var(--ok)} .chip.warn{background:var(--warn-soft);color:var(--warn)}
+.chip.dot::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+button,.btn{font:inherit;font-weight:600;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:10px 14px;min-height:44px;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.ghost{background:transparent}
+.danger{color:var(--danger)}
+.wide{width:100%}
+.sec{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px 16px;display:flex;flex-direction:column;gap:12px}
+.sec h3{color:var(--accent);text-transform:uppercase;font-size:16px;letter-spacing:.06em}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 12px}
+.field{grid-column:1/-1;display:flex;flex-direction:column;gap:6px;min-width:0}
+.field.half{grid-column:auto}
+@media (max-width:380px){.field.half{grid-column:1/-1}}
+.field>label,.field>.lab{font-size:14px;font-weight:600}
+.field .opt{font-weight:400;color:var(--muted);font-size:12px}
+input,select,textarea{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;min-height:44px;width:100%;min-width:0}
+textarea{min-height:80px;resize:vertical}
+.unit{display:flex;align-items:center;gap:8px}.unit span{color:var(--muted);font-size:14px}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{min-height:40px;padding:7px 12px;font-weight:500;background:var(--bg)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.field.invalid input,.field.invalid select,.field.invalid textarea,.field.invalid .seg button,.field.invalid .tiles,.field.invalid .shot{border-color:var(--danger)}
+.err{color:var(--danger);font-size:13px;font-weight:600}
+.err:empty{display:none}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;border:1px solid transparent;border-radius:8px}
+.tile{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 6px;font-size:12px;font-weight:500;background:var(--bg);min-height:0;line-height:1.2;text-align:center}
+.tile canvas{width:100%;max-width:90px;height:auto}
+.tile[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 2px var(--accent);background:var(--accent-soft)}
+.shots{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.shot{position:relative;border:1.5px dashed var(--line);border-radius:8px;aspect-ratio:4/3;max-width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;padding:8px;background:var(--bg);overflow:hidden;cursor:pointer}
+.shot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.shot .cap{position:relative;font-size:13px;font-weight:600}
+.shot.has{border-style:solid;border-color:var(--ok)}
+.shot.has .cap{position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.62);color:#fff;font-size:12px;padding:4px 6px;text-align:left}
+.shot input{position:absolute;opacity:0;width:1px;height:1px}
+.shot .req{font-size:11px;color:var(--muted);position:relative}
+.cam{width:28px;height:28px;position:relative;opacity:.7}
+.item{display:flex;gap:12px;align-items:flex-start;border-top:1px solid var(--line);padding-top:12px}
+.item:first-of-type{border-top:0;padding-top:0}
+.item canvas{width:64px;height:auto;flex:none;border-radius:4px}
+.item .info{flex:1;min-width:0}
+.item .t{font-weight:600}
+.item .d{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.bar-in{max-width:720px;margin:0 auto;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;gap:10px}
+.bar-in button{flex:1}
+.errs{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.errs a{color:var(--danger);font-weight:600;text-decoration:underline;cursor:pointer}
+.ostype{display:inline-block;padding:1px 8px;border-radius:4px;color:#1b2a30;font-weight:600;font-size:13px}
+.sig{width:100%;height:auto;aspect-ratio:3/1;max-width:100%;border:1px solid var(--line);border-radius:8px;background:#fff;touch-action:none}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:8px;font-weight:600;z-index:20;max-width:calc(100% - 32px);text-align:center}
+.done{border-color:var(--ok);background:var(--ok-soft)}
+.login{max-width:420px;width:100%;margin:8vh auto 0}
+.login img{width:180px;max-width:100%}
+.cq{position:relative;width:100%;max-width:100%;aspect-ratio:3/2;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff}
+.cq canvas{position:absolute;inset:0;width:100%;height:100%}
+.cq-fg{touch-action:none;cursor:crosshair}
+.cq-txt{position:absolute;display:flex;gap:4px;background:var(--surface);padding:4px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.25);width:min(260px,90%)}
+.cq-txt input{min-height:36px;padding:6px 8px}.cq-txt button{min-height:36px;padding:4px 10px}
+.cq-tools button{min-height:40px}
+.chip.neutral{background:var(--surface-2);color:var(--muted)} .chip.info{background:var(--accent-soft);color:var(--accent)} .chip.bad{background:var(--danger-soft);color:var(--danger)}
+.warnbox{border-color:var(--warn);background:var(--warn-soft)}
+.aviso{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:12px}
+.aviso .t{font-weight:600}
+.tbl{overflow-x:auto;max-width:100%}
+.cmp{width:100%;border-collapse:collapse;font-size:14px}
+.cmp th,.cmp td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+.cmp thead th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.cmp tr.bad td,.cmp tr.bad th{background:var(--danger-soft);color:var(--danger)}
+.cq-par{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cq-par figure{margin:0;display:flex;flex-direction:column;gap:4px;min-width:0}
+.cq-par img{border:1px solid var(--line);border-radius:6px;background:#fff}
+.cq-par figcaption{font-size:12px;color:var(--muted)}
+.hist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.travado button.check{min-height:36px;padding:4px 16px;border:2px solid var(--accent);background:transparent;color:var(--accent);font-weight:700;border-radius:999px}
+.travado button.check.on{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.travado.ok .val{color:var(--ok)}
+.field.calc .val{padding:8px 0;font-weight:600}
+.travado .val{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 0;font-weight:500}
+button.link{background:none;border:0;padding:0;min-height:28px;color:var(--accent);font-weight:600;align-self:flex-start;text-decoration:underline}
+.rs h4{margin:4px 0 6px;font-family:var(--f-display);font-size:16px;text-transform:uppercase;letter-spacing:.05em;color:var(--accent)}
+.rs dl{display:grid;grid-template-columns:minmax(0,40%) minmax(0,1fr);gap:4px 12px;margin:0;font-size:14px}
+.rs dt{color:var(--muted)} .rs dd{margin:0;overflow-wrap:anywhere}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px}
+.thumbs figure{margin:0;display:flex;flex-direction:column;gap:2px;min-width:0}
+.thumbs img{aspect-ratio:4/3;object-fit:cover;width:100%;border-radius:6px;border:1px solid var(--line);background:#fff}
+.thumbs figcaption{font-size:11px;color:var(--muted)}
+.inline-confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:14px}
+@media (prefers-reduced-motion:no-preference){.toast{animation:up .2s ease-out}@keyframes up{from{opacity:0;transform:translate(-50%,8px)}}}
+</style>
+
+<div id="app"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+<script>
+/* Conferência Pedido de Venda x OS (Atenua)
+ * Lê o PDF do pedido (gerado pelo sistema, FastReport), extrai os campos que vão para a OS
+ * e compara com a OS preenchida no app. Roda no navegador (pdf.js) e no Node (para testes).
+ *
+ * API:
+ *   lerTextoPDF(pdfjsLib, dados)   -> [[linhas da pág 1], [linhas da pág 2], ...]
+ *   lerPedido(paginas)             -> objeto do pedido (ver parsePedido)
+ *   preencherOS(pedido)            -> {pedido:{...}, itens:[{campos}]} no formato do app-os
+ *   conferir(pedido, OS, opcoes)   -> (OS = OS aberta no app: OS.pedido, OS.itens, OS.vendedor) {bloqueios:[], linhas:[{grupo,campo,pedido,os,status,obs}], resumo}
+ */
+(function (root) {
+  "use strict";
+
+  /* ---------- utilidades ---------- */
+  const semAcento = s => String(s == null ? "" : s).normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const norm = s => semAcento(s).toUpperCase().replace(/\s+/g, " ").trim();
+  const compacto = s => norm(s).replace(/[^A-Z0-9]/g, "");
+  const digitos = s => String(s == null ? "" : s).replace(/\D/g, "");
+  const tokens = s => norm(s).split(/[^A-Z0-9]+/).filter(t => t.length > 1 && !["DE", "DA", "DO", "DAS", "DOS", "E", "C"].includes(t));
+  const vazio = v => v == null || (Array.isArray(v) ? v.length === 0 : String(v).trim() === "");
+  function tokensContidos(a, b) { // todos os tokens do menor estão no maior
+    const ta = tokens(a), tb = tokens(b);
+    if (!ta.length || !tb.length) return false;
+    const [menor, maior] = ta.length <= tb.length ? [ta, tb] : [tb, ta];
+    return menor.every(t => maior.includes(t));
+  }
+  const brParaISO = d => { const m = /(\d{2})\/(\d{2})\/(\d{4})/.exec(d || ""); return m ? `${m[3]}-${m[2]}-${m[1]}` : ""; };
+  const isoParaBR = d => { const m = /(\d{4})-(\d{2})-(\d{2})/.exec(d || ""); return m ? `${m[3]}/${m[2]}/${m[1]}` : (d || ""); };
+  const fmtCEP = c => { const d = digitos(c); return d.length === 8 ? d.slice(0, 5) + "-" + d.slice(5) : d; };
+  const fmtTel = t => { const d = digitos(t); if (d.length === 11) return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`; if (d.length === 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`; return t || ""; };
+  const MINUSC = ["de", "da", "do", "das", "dos", "e", "c/"];
+  const titulo = s => String(s == null ? "" : s).replace(/\s+/g, " ").trim().toLowerCase().split(" ")
+    .map((w, i) => i && MINUSC.includes(w) ? w : w.charAt(0).toUpperCase() + w.slice(1)).join(" ")
+    .replace(/\bRal ?(\d{4})([a-z]?)\b/g, (m, n, l) => "RAL" + n + l.toUpperCase()).replace(/(\d)mm\b/g, "$1 mm");
+
+  /* ---------- 1. texto do PDF, reconstruído em linhas ---------- */
+  async function lerTextoPDF(pdfjsLib, dados) {
+    const doc = await pdfjsLib.getDocument({ data: dados }).promise;
+    const paginas = [];
+    for (let p = 1; p <= doc.numPages; p++) {
+      const tc = await (await doc.getPage(p)).getTextContent();
+      const itens = tc.items.filter(i => i.str && i.str.trim()).map(i => ({ x: i.transform[4], y: i.transform[5], w: i.width, s: i.str }));
+      itens.sort((a, b) => b.y - a.y || a.x - b.x);
+      const linhas = [];
+      for (const it of itens) {
+        const l = linhas.find(l => Math.abs(l.y - it.y) <= 3);
+        if (l) l.itens.push(it); else linhas.push({ y: it.y, itens: [it] });
+      }
+      linhas.sort((a, b) => b.y - a.y);
+      paginas.push(linhas.map(l => {
+        l.itens.sort((a, b) => a.x - b.x);
+        let txt = "", fim = null;
+        for (const it of l.itens) { if (fim != null) txt += (it.x - fim > 12 ? "   " : it.x - fim > 0.5 ? " " : ""); txt += it.s; fim = it.x + it.w; }
+        return txt.replace(/\s+$/, "");
+      }));
+    }
+    return paginas;
+  }
+
+  /* ---------- 2. leitura dos campos ---------- */
+  const CHAVES_ITEM = { "LINHA": "linha", "MODELO": "modelo", "VIDROS": "vidro", "VIDRO": "vidro", "COR": "cor", "TIPO DE INSTALACAO": "instalacao",
+    "MEDIDAS": "medidas", "REFILAMENTO": "refilamento", "CALCO": "calco", "POSICAO DAS FOLHAS": "posFolhas", "CONCHA": "concha" };
+
+  function parsePedido(paginas) {
+    const linhasPag = paginas.map(p => p.map(l => l.trim()).filter(Boolean));
+    const todas = linhasPag.flat();
+    const achar = (re, fonte = todas) => { for (const l of fonte) { const m = re.exec(l); if (m) return m; } return null; };
+    const avisos = [];
+    const r = { numero: "", revisao: false, dataPedido: "", vendedor: "", cliente: {}, entrega: null, itens: [], totalPecas: null, prazo: null, avisos };
+
+    const mNum = achar(/PPV(R\d*)?\s*-\s*N[ºo°]\s*(\d+)?/i);
+    if (mNum) { r.revisao = !!mNum[1]; r.numero = mNum[2] || ""; }
+    if (!r.numero) { const i = todas.findIndex(l => /PPV/.test(l)); for (const l of todas.slice(i + 1, i + 5)) { const m = i >= 0 && (/^(\d{3,7})$/.exec(l) || /\s{2,}(\d{3,7})$/.exec(l)); if (m) { r.numero = m[1]; break; } } }
+    if (r.revisao) avisos.push("Este é um pedido de revisão/alteração (PPVR), fora do padrão: conferência automática não se aplica.");
+    const mData = achar(/Data de abertura do pedido:\s*(\d{2}\/\d{2}\/\d{4})/i); if (mData) r.dataPedido = brParaISO(mData[1]);
+
+    // cabeçalho do cliente: da linha "Cliente:" até "Telefone Contato:" na primeira página
+    const p1 = (linhasPag[0] || []).map(l => l.replace(/\s*Projeto\/Obra:.*$/i, "").trim());
+    const iCli = p1.findIndex(l => /^Cliente:/i.test(l));
+    if (iCli >= 0) {
+      const iEnd = p1.findIndex((l, i) => i > iCli && /^Endere[cç]o:/i.test(l));
+      const nomeLinhas = p1.slice(iCli, iEnd > iCli ? iEnd : iCli + 1).join(" ").replace(/^Cliente:\s*/i, "");
+      const mc = /^(\d+)\s*-\s*(.+)$/.exec(nomeLinhas.trim());
+      r.cliente.codigo = mc ? mc[1] : ""; r.cliente.nome = (mc ? mc[2] : nomeLinhas).trim();
+      if (iEnd > 0) {
+        r.cliente.endereco = p1[iEnd].replace(/^Endere[cç]o:\s*/i, "").trim();
+        const mb = /^(.*?)\s*-\s*(.+?)\/([A-Z]{2})\b/.exec(p1[iEnd + 1] || "");
+        if (mb) { r.cliente.bairro = mb[1].trim(); r.cliente.cidade = mb[2].trim(); r.cliente.uf = mb[3]; }
+      }
+      const cab = p1.slice(iCli);
+      const g = re => { const m = achar(re, cab); return m ? m[1].trim() : ""; };
+      r.cliente.cep = digitos(g(/^CEP:\s*(\d[\d.-]*)/i));
+      r.cliente.telefone = g(/^CEP:.*Telefone:\s*(\(?\d[\d()\s-]*\d)/i);
+      r.cliente.documento = g(/^CNPJ\/CPF:\s*(\d+)/i);
+      r.cliente.contato = g(/^Contato:\s*(.+)$/i);
+      r.cliente.email = g(/^E-mail Contato:\s*(\S+)/i).toLowerCase();
+      r.cliente.telefoneContato = g(/^Telefone Contato:\s*(\(?\d[\d()\s-]*\d)/i);
+    }
+
+    // local de entrega
+    const mEnt = achar(/^Local de Entrega:\s*(.*)$/i);
+    if (mEnt && mEnt[1].trim()) {
+      const t = mEnt[1].trim();
+      const m = /^(.*)\s+-\s+(.+?)\/([A-Z]{2})\b.*?CEP:\s*(\d+)/.exec(t);
+      if (m) {
+        const partes = m[1].split(",").map(s => s.trim());
+        const bairro = partes.length >= 3 ? partes.pop() : "";
+        r.entrega = { endereco: partes.join(", "), bairro, cidade: m[2].trim(), uf: m[3], cep: m[4], texto: t };
+      } else r.entrega = { texto: t };
+    }
+
+    // vendedor: linha da assinatura na última página
+    const mVend = achar(/^(.+?)\s{2,}Assinatura do Cliente/i, linhasPag[linhasPag.length - 1] || []);
+    if (mVend) r.vendedor = mVend[1].trim();
+
+    // observações
+    const mPecas = achar(/TOTAL DE PE[CÇ]AS:\s*(\d+)/i); if (mPecas) r.totalPecas = +mPecas[1];
+    const mPrazo = achar(/PRAZO DE ENTREGA:\s*(.+)$/i);
+    if (mPrazo) {
+      const t = mPrazo[1].trim();
+      const m = /(\d+)\s*(?:[ÁAÀ]|A|ATE|ATÉ|-)\s*(\d+)\s*DIAS\s*[UÚ]TEIS\s*AP[OÓ]S\s*([^,.]+)/i.exec(t);
+      const um = /(\d+)\s*DIAS\s*[UÚ]TEIS\s*AP[OÓ]S\s*([^,.]+)/i.exec(t);
+      if (m) r.prazo = { min: +m[1], max: +m[2], marco: m[3].trim(), texto: t };
+      else if (um) r.prazo = { min: +um[1], max: +um[1], marco: um[2].trim(), texto: t };
+      else r.prazo = { texto: t };
+      if (r.prazo.marco) r.prazo.aposMedicao = /^(RE)?MEDI[CÇ][AÃ]O\b/i.test(semAcento(r.prazo.marco).toUpperCase()) || /^(RE)?MEDICAO/.test(compacto(r.prazo.marco));
+      r.prazo.remedicao = /REMEDI/.test(norm(t));
+    }
+
+    // itens: corpo das páginas (sem cabeçalho e rodapé), cortado em "Código:"
+    const corpo = [];
+    for (const pg of linhasPag) {
+      let i0 = pg.findIndex(l => /^Telefone Contato:/i.test(l)); i0 = i0 >= 0 ? i0 + 1 : 0;
+      for (const l of pg.slice(i0)) {
+        if (/^_{5,}/.test(l) || /^Rubrica$/i.test(l) || /^Emitente:/i.test(l) || /P[aá]gina \d+ de \d+/.test(l)) continue;
+        corpo.push(l);
+      }
+    }
+    let atual = null;
+    for (const l of corpo) {
+      if (/^C[oó]digo:/i.test(l)) { atual = { codigo: l.replace(/^C[oó]digo:\s*/i, "").trim(), linhas: [] }; r.itens.push(atual); continue; }
+      if (/^TOTAL PRODUTO:/i.test(l) || /^Observa[cç][oõ]es:/i.test(l)) { atual = null; continue; }
+      if (atual) atual.linhas.push(l);
+    }
+    r.itens = r.itens.map((it, n) => parseItem(it, n + 1));
+    if (!r.revisao && !r.itens.length) avisos.push("Nenhum item encontrado no pedido.");
+    return r;
+  }
+
+  function parseItem(bruto, n) {
+    const it = { n, qtde: 1, descricao: "" };
+    let chave = null;
+    for (let l of bruto.linhas) {
+      const mq = /^(\d+,\d{3})\s*(PC|UN|M2|M²)?\b/i.exec(l);
+      if (mq && !it._q) { it.qtde = Math.round(parseFloat(mq[1].replace(",", "."))); it._q = 1; continue; }
+      if (/^(UN|PC)$/i.test(l) || /^Item\s*:/i.test(l) || /^CFOP:/i.test(l)) continue;
+      const mDim = /Largura:\s*([\d,]+)\s*Altura:\s*([\d,]+)/i.exec(l);
+      if (mDim) { it.larguraTotal = Math.round(parseFloat(mDim[1].replace(",", ".")) * 1000); it.alturaTotal = Math.round(parseFloat(mDim[2].replace(",", ".")) * 1000); l = l.slice(0, mDim.index).trim(); if (!l) continue; }
+      const md = /^Descri[cç][aã]o:\s*(.*)$/i.exec(l);
+      if (md) { const t = md[1]; const mm = /DESCRI[CÇ][AÃ]O\s*:\s*(.*)$/i.exec(t); it.descricao = (mm ? mm[1] : t).trim(); chave = "descricao"; continue; }
+      const mk = /^([A-ZÀ-Ú][A-ZÀ-Ú ]+?)\s*:\s*(.*)$/.exec(l);
+      const k = mk && CHAVES_ITEM[semAcento(mk[1]).toUpperCase().trim()];
+      if (k) { it[k] = mk[2].trim(); chave = k; continue; }
+      if (chave) it[chave] = (it[chave] + " " + l).trim();
+    }
+    delete it._q;
+    // medidas: "1410+90 X 1340+90" ou "1700 X 1350"
+    const mm = /(\d+)\s*(?:\+\s*(\d+))?\s*[X×]\s*(\d+)\s*(?:\+\s*(\d+))?/i.exec(it.medidas || "");
+    if (mm) { it.largura = +mm[1]; it.acrescL = mm[2] ? +mm[2] : 0; it.altura = +mm[3]; it.acrescA = mm[4] ? +mm[4] : 0; }
+    it.fixacao = /SOBREPOST/.test(norm(it.instalacao || it.descricao)) ? "Sobreposta" : /EMBUTID/.test(norm(it.instalacao || it.descricao)) ? "Embutida" : "";
+    it.tipologia = tipologiaDe(it.modelo || it.descricao);
+    const mod = norm(it.modelo);
+    it.persiana = /PERSIANA/.test(mod) ? "Sim" : "Não";
+    it.acionamento = it.persiana === "Sim" ? (/SMOOVE/.test(mod) ? "Smoove" : /CONTROLE/.test(mod) ? "Controle" : /BOTOEIRA|INTERRUPTOR/.test(mod) ? "Botoeira" : "") : "";
+    it.ral = ralDe(it.cor);
+    return it;
+  }
+
+  function tipologiaDe(txt) {
+    const t = norm(txt), num = (/(\d+)\s*FOLHAS?/.exec(t) || [])[1];
+    if (/CORRER/.test(t)) return `Correr ${num || 2} folhas`;
+    if (/GIRO|ABRIR/.test(t)) return (num || "1") === "1" ? "Giro 1 folha" : "Giro 2 folhas";
+    if (/MAXIM/.test(t)) return "Maxim-ar";
+    if (/BASCULANTE/.test(t)) return "Basculante";
+    if (/PIVOTANTE/.test(t)) return "Pivotante";
+    if (/FIXO|FIXA/.test(t)) return "Fixo";
+    return "";
+  }
+  function ralDe(cor) { const m = /RAL\s*(\d{4})\s*([A-Z])?\b/.exec(norm(cor)); return m ? m[1] + (m[2] || "") : ""; }
+
+  /* ---------- 3. pré-preenchimento da OS (formato do app-os) ---------- */
+  function preencherOS(p) {
+    const c = p.cliente || {}, e = p.entrega && p.entrega.endereco ? p.entrega : null;
+    const mesmo = !e || mesmoEndereco(e.endereco, c.endereco);
+    const end = mesmo ? (c.endereco || "") : e.endereco;
+    const tels = [c.telefoneContato, c.telefone].filter(Boolean).map(digitos).filter((v, i, a) => a.indexOf(v) === i);
+    const cel = tels.find(t => t.length === 11) || tels[0] || "";
+    const pedido = {
+      numPedido: p.numero, dataPedido: p.dataPedido,
+      prazo: p.prazo && p.prazo.max ? String(p.prazo.max) : "",
+      tipoOS: p.prazo && p.prazo.remedicao ? "Remedição (O.S Rosa)" : "",
+      nome: titulo(c.nome), email: c.email || "",
+      endereco: titulo(end), bairro: titulo(e ? e.bairro || c.bairro : c.bairro), cidade: titulo(e ? e.cidade : c.cidade), cep: fmtCEP(e ? e.cep : c.cep), uf: (e ? e.uf : c.uf) || "",
+      mesmoEnd: mesmo ? "Sim" : "Não", enderecoCli: mesmo ? "" : titulo([c.endereco, c.bairro, c.cidade].filter(Boolean).join(", ")),
+      celular: fmtTel(cel), telCom: tels.find(t => t !== cel) ? fmtTel(tels.find(t => t !== cel)) : "", contato: titulo(c.contato),
+    };
+    const itens = [];
+    for (const it of p.itens) for (let k = 0; k < it.qtde; k++) itens.push({ campos: {
+      tipologia: it.tipologia || "Outra", tipoOutra: it.tipologia ? "" : titulo(it.modelo || it.descricao),
+      largura: it.largura ? String(it.largura) : "", altura: it.altura ? String(it.altura) : "",
+      acrescimo: it.acrescL || it.acrescA ? "Sim" : (it.medidas ? "Não" : ""), folgaL: it.acrescL ? String(it.acrescL) : "", folgaA: it.acrescA ? String(it.acrescA) : "",
+      calco: simNao(it.calco), linha: titulo(it.linha), vidro: titulo(it.vidro), cor: titulo(it.cor),
+      posFolhas: titulo(it.posFolhas), concha: titulo(it.concha), persiana: it.persiana, acion: it.acionamento, fixacao: it.fixacao,
+      refilar: simNao(it.refilamento),
+    }, origem: { itemPedido: it.n, unidade: k + 1, de: it.qtde } });
+    return { pedido, itens };
+  }
+  const simNao = v => /^S/i.test(norm(v)) ? "Sim" : /^N/i.test(norm(v)) ? "Não" : "";
+  function mesmoEndereco(a, b) {
+    const ra = /^(.*?)[,\s]+(\d+)/.exec(norm(a)), rb = /^(.*?)[,\s]+(\d+)/.exec(norm(b));
+    if (!ra || !rb) return compacto(a) === compacto(b);
+    return ra[2] === rb[2] && tokensContidos(ra[1], rb[1]);
+  }
+
+  /* ---------- 4. conferência ---------- */
+  // os = estado do app-os: {pedido:{...}, itens:[{campos:{...}}], user:{nome}}
+  function conferir(p, os, opcoes = {}) {
+    const tol = opcoes.toleranciaMM != null ? opcoes.toleranciaMM : 10;
+    const linhas = [], bloqueios = [];
+    const add = (grupo, campo, vp, vo, status, obs) => linhas.push({ grupo, campo, pedido: vp == null ? "" : String(vp), os: vo == null ? "" : String(vo), status, obs: obs || "" });
+    const cmp = (grupo, campo, vp, vo, igual, obs) => {
+      if (vazio(vp)) return add(grupo, campo, "(não consta no pedido)", vo, "info", obs);
+      if (vazio(vo)) return add(grupo, campo, vp, "(vazio)", "falta", obs);
+      add(grupo, campo, vp, vo, igual(vp, vo) ? "ok" : "diverge", obs);
+    };
+    const eqTxt = (a, b) => compacto(a) === compacto(b) || tokensContidos(a, b);
+    const O = (os && os.pedido) || {}, c = p.cliente || {};
+
+    if (p.revisao) { bloqueios.push("Pedido de revisão (PPVR): não é o padrão de pedido. Anexe o pedido original."); return fechar(); }
+
+    /* pedido */
+    cmp("Pedido", "Nº do pedido", p.numero, O.numPedido, (a, b) => digitos(a) === digitos(b));
+    cmp("Pedido", "Data do pedido", isoParaBR(p.dataPedido), isoParaBR(O.dataPedido), (a, b) => a === b);
+    const vendOS = os && (os.vendedor || (os.user && os.user.nome));
+    if (p.vendedor) cmp("Pedido", "Vendedor", p.vendedor, vendOS, tokensContidos, "Nome acima da assinatura do pedido x vendedor da OS");
+
+    // prazo: obrigatório, contado após medição, e a OS dentro da faixa
+    const pz = p.prazo;
+    if (!pz || !pz.max) bloqueios.push("O pedido não tem o prazo de entrega no formato \"X a Y dias úteis após medição\". Corrija o pedido antes de emitir a OS.");
+    else if (!pz.aposMedicao) bloqueios.push(`O prazo do pedido é contado "após ${pz.marco.toLowerCase()}", e não após a medição. Corrija o pedido antes de emitir a OS.`);
+    if (pz && pz.max) {
+      const faixa = pz.min === pz.max ? `${pz.max} dias úteis` : `${pz.min} a ${pz.max} dias úteis`;
+      if (vazio(O.prazo)) add("Pedido", "Prazo de entrega", faixa, "(vazio)", "falta", pz.texto);
+      else add("Pedido", "Prazo de entrega", faixa, `${O.prazo} dias úteis`, (+O.prazo >= pz.min && +O.prazo <= pz.max) ? "ok" : "diverge", pz.texto);
+    }
+    if (pz && pz.remedicao) cmp("Pedido", "Tipo de OS", "Remedição (O.S Rosa)", O.tipoOS, (a, b) => /REMEDI/.test(norm(b)) && !/SEM/.test(norm(b)), "O prazo do pedido cita remedição");
+
+    /* cliente */
+    cmp("Cliente", "Nome", c.nome, O.nome, eqTxt);
+    cmp("Cliente", "E-mail", c.email, O.email, (a, b) => norm(a) === norm(b));
+    const telsP = [c.telefone, c.telefoneContato].map(digitos).filter(Boolean);
+    const telsO = [O.celular, O.telCom, O.telRes].map(digitos).filter(Boolean);
+    if (telsP.length) {
+      if (!telsO.length) add("Cliente", "Telefone", telsP.map(fmtTel).join(" / "), "(vazio)", "falta");
+      else add("Cliente", "Telefone", [...new Set(telsP)].map(fmtTel).join(" / "), telsO.map(fmtTel).join(" / "), telsP.some(t => telsO.includes(t)) ? "ok" : "diverge", "Pelo menos um telefone do pedido precisa estar na OS");
+    }
+    const E = p.entrega && p.entrega.endereco ? p.entrega : { endereco: c.endereco, bairro: c.bairro, cidade: c.cidade, uf: c.uf, cep: c.cep };
+    const obsEnt = p.entrega && p.entrega.endereco ? (mesmoEndereco(p.entrega.endereco, c.endereco) ? "" : `Atenção: o local de entrega é diferente do endereço do cliente (${c.endereco})`) : "Pedido sem local de entrega; usado o endereço do cliente";
+    cmp("Entrega", "Endereço de instalação", E.endereco, O.endereco, mesmoEndereco, obsEnt);
+    cmp("Entrega", "Bairro", E.bairro, O.bairro, eqTxt);
+    cmp("Entrega", "Cidade", E.cidade, O.cidade, eqTxt);
+    cmp("Entrega", "CEP", fmtCEP(E.cep), O.cep, (a, b) => digitos(a) === digitos(b));
+    cmp("Entrega", "UF", E.uf, O.uf, (a, b) => norm(a) === norm(b));
+
+    /* itens */
+    const unidades = [];
+    for (const it of p.itens) for (let k = 0; k < it.qtde; k++) unidades.push({ it, k });
+    // usa a versão liberada do item, se houver; senão a do remedidor; senão a do vendedor
+    const camposDe = x => { const v = x.final || x.remed; return (v && (v.campos || v)) || x.campos || {}; };
+    const itensOS = ((os && os.itens) || []).map((x, i) => ({ i, d: camposDe(x) }));
+    const totalPedido = p.totalPecas != null ? p.totalPecas : unidades.length;
+    add("Itens", "Quantidade de peças", totalPedido, itensOS.length, totalPedido === itensOS.length ? "ok" : "diverge",
+      p.totalPecas != null && p.totalPecas !== unidades.length ? `Observações dizem ${p.totalPecas} peças, itens somam ${unidades.length}` : "");
+
+    // casa cada peça do pedido com o item da OS mais parecido
+    const livres = itensOS.slice();
+    for (const u of unidades) {
+      let melhor = null, nota = -1;
+      for (const o of livres) { const s = semelhanca(u.it, o.d, tol); if (s > nota) { nota = s; melhor = o; } }
+      const g = `Item ${u.it.n}${u.it.qtde > 1 ? ` (peça ${u.k + 1} de ${u.it.qtde})` : ""}${melhor ? ` × OS item ${melhor.i + 1}${melhor.d.ambiente ? " – " + melhor.d.ambiente : ""}` : ""}`;
+      if (!melhor) { add(g, "Peça do pedido", `${u.it.tipologia || u.it.descricao} ${u.it.medidas || ""}`, "(sem item correspondente na OS)", "falta"); continue; }
+      livres.splice(livres.indexOf(melhor), 1);
+      conferirItem(u.it, melhor.d, g, cmp, add, tol);
+    }
+    for (const o of livres) add(`OS item ${o.i + 1}${o.d.ambiente ? " – " + o.d.ambiente : ""}`, "Item da OS", "(não existe no pedido)", `${o.d.tipologia || ""} ${o.d.largura || ""}×${o.d.altura || ""}`, "diverge");
+
+    return fechar();
+
+    function fechar() {
+      const cont = s => linhas.filter(l => l.status === s).length;
+      const resumo = { ok: cont("ok"), diverge: cont("diverge"), falta: cont("falta"), info: cont("info"), bloqueios: bloqueios.length };
+      resumo.aprovado = !resumo.diverge && !resumo.falta && !resumo.bloqueios;
+      return { pedido: p.numero, bloqueios, avisos: p.avisos || [], linhas, resumo };
+    }
+  }
+
+  function conferirItem(it, d, g, cmp, add, tol) {
+    const eqTxt = (a, b) => compacto(a) === compacto(b) || tokensContidos(a, b);
+    const tipoOS = d.tipologia === "Outra" ? d.tipoOutra : d.tipologia;
+    cmp(g, "Tipologia", it.tipologia || it.modelo, tipoOS, (a, b) => it.tipologia ? norm(a) === norm(b) : eqTxt(a, b), it.modelo);
+    cmp(g, "Linha", it.linha, d.linha, eqTxt);
+    cmp(g, "Vidro", it.vidro, d.vidro, eqTxt);
+    cmp(g, "Cor", it.cor, d.cor, (a, b) => it.ral ? ralDe(b) === it.ral : eqTxt(a, b), it.ral ? "Compara o código RAL" : "");
+    cmp(g, "Instalação", it.fixacao, d.fixacao, (a, b) => norm(a) === norm(b));
+    const mm = (vp, vo) => Math.abs(+vp - +digitos(vo)) <= tol;
+    cmp(g, "Largura (sem acréscimo)", it.largura, d.largura, mm, `Tolerância ±${tol} mm`);
+    cmp(g, "Altura (sem acréscimo)", it.altura, d.altura, mm, `Tolerância ±${tol} mm`);
+    const acrP = it.acrescL || it.acrescA ? `+${it.acrescL} / +${it.acrescA} mm` : "Sem acréscimo";
+    const acrO = d.acrescimo === "Sim" ? `+${d.folgaL || 0} / +${d.folgaA || 0} mm` : d.acrescimo === "Não" ? "Sem acréscimo" : "";
+    if (it.medidas) cmp(g, "Acréscimo (largura / altura)", acrP, acrO, (a, b) => a === b);
+    if ((d.fixacao === "Sobreposta" || it.fixacao === "Sobreposta") && d.acrescimo !== "Sim")
+      add(g, "Regra: sobreposta tem acréscimo", "Sobreposta", d.acrescimo === "Não" ? "Sem acréscimo" : "(vazio)", "diverge", "Peça sobreposta precisa de acréscimo nas medidas");
+    cmp(g, "Persiana", it.persiana, d.persiana, (a, b) => a === b);
+    if (it.persiana === "Sim" && it.acionamento) cmp(g, "Acionamento da persiana", it.acionamento, d.acion, (a, b) => a === b);
+    cmp(g, "Calço", simNao(it.calco), d.calco, (a, b) => a === b);
+    if (it.refilamento) {
+      const semCM = !d.contramarco || d.contramarco === "Sem contramarco";
+      if (semCM && simNao(it.refilamento) === "Não") add(g, "Refilamento", "Não", d.contramarco ? "Sem contramarco" : "(contramarco vazio)", d.contramarco ? "ok" : "info");
+      else cmp(g, "Refilamento", simNao(it.refilamento), semCM ? "Sem contramarco" : d.refilar, (a, b) => a === b);
+    }
+    cmp(g, "Posição das folhas", it.posFolhas, d.posFolhas, eqTxt);
+    cmp(g, "Concha", it.concha, d.concha, eqTxt);
+  }
+
+  function semelhanca(it, d, tol) {
+    let s = 0;
+    if (it.largura && Math.abs(it.largura - +digitos(d.largura)) <= tol) s += 3;
+    if (it.altura && Math.abs(it.altura - +digitos(d.altura)) <= tol) s += 3;
+    if (it.tipologia && norm(it.tipologia) === norm(d.tipologia)) s += 2;
+    if (it.fixacao && it.fixacao === d.fixacao) s += 1;
+    if (it.persiana === d.persiana) s += 1;
+    if (it.linha && compacto(it.linha) === compacto(d.linha)) s += 1;
+    return s;
+  }
+
+  const api = { lerTextoPDF, parsePedido, lerPedido: parsePedido, preencherOS, conferir, _util: { norm, compacto, tipologiaDe, ralDe, mesmoEndereco } };
+  if (typeof module === "object" && module.exports) module.exports = api;
+  root.ConferenciaPedido = api;
+})(typeof globalThis !== "undefined" ? globalThis : this);
+
+</script>
+<script>
+"use strict";
+const LOGO = "data:image/jpeg;base64,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";
+const VERSAO = "protótipo 0.3";
+const PREVIEW = (()=>{ try { return window.self !== window.top; } catch(e){ return true; } })();
+const EXIGE_GPS = !PREVIEW;
+// Usuários do protótipo. Na versão real o login vem da conta Google de cada pessoa.
+const USUARIOS = [
+  {nome:"Guilherme",perfil:"vendedor",pin:"1234"},{nome:"Vendedor 2",perfil:"vendedor",pin:"1234"},
+  {nome:"Remedidor 1",perfil:"remedidor",pin:"1234",distribui:true},{nome:"Remedidor 2",perfil:"remedidor",pin:"1234"},
+  {nome:"Guilherme (Auditoria)",perfil:"auditoria",pin:"1234"}];
+
+const YN = ["Sim","Não"];
+const UF = "AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO".split(" ");
+const TIPOS_OS = ["Remedição (O.S Rosa)","Sem Remedição (O.S Verde)","RAP10 (O.S Amarela)"];
+const COR_OS = {"Remedição (O.S Rosa)":[242,162,196],"Sem Remedição (O.S Verde)":[159,213,154],"RAP10 (O.S Amarela)":[255,228,92]};
+const TIPOLOGIAS = ["Correr 2 folhas","Correr 3 folhas","Correr 4 folhas","Giro 1 folha","Giro 2 folhas","Maxim-ar","Basculante","Pivotante","Fixo","Outra"];
+const sim = k => d => d[k]==="Sim";
+
+const PEDIDO = [
+ {id:"cab",titulo:"Pedido",campos:[
+  {k:"numPedido",l:"Nº do pedido",t:"text",im:"numeric",w:1},
+  {k:"dataPedido",l:"Data do pedido",t:"date",w:1},
+  {k:"prazo",l:"Prazo p/ instalação",t:"num",u:"dias úteis",min:1,max:365,w:1},
+  {k:"tipoOS",l:"Tipo de OS",t:"radio",op:TIPOS_OS},
+ ]},
+ {id:"cli",titulo:"Cliente",campos:[
+  {k:"nome",l:"Nome",t:"text",ac:"name"},
+  {k:"email",l:"E-mail",t:"email"},
+  {k:"endereco",l:"Local de instalação / entrega",t:"text",ph:"Rua, número, apto"},
+  {k:"referencia",l:"Ponto de referência",t:"text"},
+  {k:"bairro",l:"Bairro",t:"text",w:1},
+  {k:"cidade",l:"Cidade",t:"text",w:1},
+  {k:"cep",l:"CEP",t:"cep",w:1},
+  {k:"uf",l:"UF",t:"select",op:UF,w:1},
+  {k:"mesmoEnd",l:"O endereço do cliente é o mesmo da instalação",t:"yn"},
+  {k:"enderecoCli",l:"Endereço do cliente (cadastro / cobrança)",t:"text",se:d=>d.mesmoEnd==="Não"},
+  {k:"celular",l:"Celular",t:"tel",w:1},
+  {k:"contato",l:"Falar com",t:"text",w:1},
+  {k:"telCom",l:"Tel. comercial",t:"tel",opt:true,w:1},
+  {k:"telRes",l:"Tel. residencial",t:"tel",opt:true,w:1},
+ ]},
+ {id:"log",titulo:"Logística da obra",campos:[
+  {k:"estac",l:"Fácil acesso de estacionamento",t:"yn",w:1},
+  {k:"zonaAzul",l:"Zona azul",t:"yn",w:1},
+  {k:"vaga",l:"Vaga disponível",t:"yn",w:1},
+  {k:"infoInst",l:"Fornecer informações dos instaladores",t:"yn",w:1},
+  {k:"epi",l:"Equipamento de proteção individual",t:"yn",w:1},
+  {k:"local",l:"Local trata-se de",t:"check",op:["Prédio","Escritório","Casa","Empresa","Reforma","Obra","Ocupado","Comercial"]},
+  {k:"acesso",l:"Acesso ao andar",t:"check",op:["Içamento","Elevador","Escada","Andaime"],w:1},
+ ]},
+];
+
+const FECHOS = ["Concha cega","Concha com trava e mola","Concha com trava sem mola","Concha leve toque","Cremona","Outro"];
+const ITEM = [
+ {id:"ide",titulo:"Identificação",pg:0,campos:[
+  {k:"ambiente",l:"Ambiente",t:"text",ph:"Ex.: Quarto do bebê"},
+  {k:"tipologia",l:"Tipologia",t:"tipo"},
+  {k:"tipoOutra",l:"Descreva a tipologia",t:"text",se:d=>d.tipologia==="Outra"},
+  {k:"vista",l:"Desenho visto pelo lado",t:"radio",op:["Interno","Externo"]},
+ ]},
+ {id:"med",titulo:"Medidas",pg:1,campos:[
+  {k:"largura",l:"Largura final",t:"num",u:"mm",min:200,max:12000,w:1},
+  {k:"altura",l:"Altura final",t:"num",u:"mm",min:200,max:6000,w:1},
+  {k:"acrescimo",l:"Tem acréscimo nas medidas? (obrigatório em sobreposta)",t:"yn"},
+  {k:"folgaL",l:"Acréscimo na largura",t:"num",u:"mm",min:1,max:500,w:1,se:sim("acrescimo")},
+  {k:"folgaA",l:"Acréscimo na altura",t:"num",u:"mm",min:1,max:500,w:1,se:sim("acrescimo")},
+  {k:"dataMed",l:"Data da medição",t:"date",w:1},
+  {k:"respMed",l:"Responsável pela medição",t:"text",w:1},
+  {k:"calco",l:"É necessário calço",t:"yn",w:1},
+  {k:"afastar",l:"Afastar",t:"num",u:"mm",min:1,max:500,w:1,se:sim("calco")},
+ ]},
+ {id:"pro",titulo:"Produto",pg:1,campos:[
+  {k:"linha",l:"Linha",t:"text",list:["Excellence"],w:1},
+  {k:"vidro",l:"Vidro",t:"text",ph:"Ex.: 8 mm laminado incolor",w:1},
+  {k:"corTipo",l:"Acabamento da esquadria",t:"radio",op:["Pintura eletrostática","Anodização"],pdf:false},
+  {k:"corRal",l:"RAL",t:"text",ph:"Ex.: 9005",w:1,pdf:false,se:d=>d.corTipo==="Pintura eletrostática"},
+  {k:"corAnod",l:"Cor da anodização",t:"text",list:["Natural","Bronze","Preto","Champagne"],w:1,pdf:false,se:d=>d.corTipo==="Anodização"},
+  {k:"corBrilho",l:"Fosco ou brilhante",t:"radio",op:["Fosco","Brilhante"],w:1,pdf:false},
+  {k:"cor",l:"Cor da esquadria",t:"calc",opt:true},
+  {k:"posFolhas",l:"Posição das folhas",t:"text",list:["Padrão"],w:1},
+  {k:"fecho",l:"Fecho",t:"radio",op:FECHOS},
+  {k:"fechoOutro",l:"Especifique o fecho",t:"text",se:d=>d.fecho==="Outro"},
+  {k:"concha",l:"Fecho",t:"hidden",opt:true,pdf:false},
+  {k:"pintExt",l:"Pintura externa diferente",t:"yn",w:1},
+  {k:"ralExt",l:"RAL externo",t:"text",w:1,se:sim("pintExt")},
+ ]},
+ {id:"per",titulo:"Persiana",pg:1,campos:[
+  {k:"persiana",l:"Persiana de enrolar",t:"yn",w:1},
+  {k:"acion",l:"Acionamento",t:"radio",op:["Botoeira","Controle","Smoove"],w:1,se:sim("persiana")},
+  {k:"volt",l:"Voltagem",t:"radio",op:["110v","220v"],w:1,se:sim("persiana")},
+  {k:"ponto",l:"Ponto elétrico",t:"radio",op:["Direito","Esquerdo"],w:1,se:sim("persiana")},
+ ]},
+ {id:"ins",titulo:"Instalação",pg:1,campos:[
+  {k:"fixacao",l:"Fixação",t:"radio",op:["Embutida","Sobreposta"],w:1},
+  {k:"posicao",l:"Posição no vão",t:"radio",op:["Interno","Externo","Centro de vão"],w:1},
+  {k:"portaGiro",l:"Porta de giro",t:"yn",w:1},
+  {k:"tipoGiro",l:"Tipo",t:"radio",op:["Trava retrátil","Janelão"],w:1,se:sim("portaGiro")},
+  {k:"sentido",l:"Sentido de abertura (vista interna)",t:"radio",op:["Para dentro","Para fora"],se:sim("portaGiro")},
+ ]},
+ {id:"vao",titulo:"Características do vão",pg:2,campos:[
+  {k:"materialVao",l:"Material do vão",t:"radio",op:["Madeira","Alvenaria","Dry wall"],w:1},
+  {k:"contramarco",l:"Contramarco",t:"radio",op:["Sem contramarco","Contramarco de ferro","Contramarco de alumínio"],w:1},
+  {k:"refilar",l:"Refilar aba do contramarco",t:"yn",w:1,se:d=>d.contramarco&&d.contramarco!=="Sem contramarco"},
+  {k:"tipoContramarco",l:"Tipo do contramarco",t:"text",w:1,se:d=>d.contramarco&&d.contramarco!=="Sem contramarco"},
+ ]},
+ {id:"ace",titulo:"Acessórios e embalagem",pg:2,campos:[
+  {k:"acess",l:"Acessórios",t:"yn",w:1},
+  {k:"acessLista",l:"Quais",t:"check",op:["Fechadura c/ chave","Outros"],w:1,se:sim("acess")},
+  {k:"acessOutros",l:"Outros acessórios",t:"text",se:d=>d.acess==="Sim"&&(d.acessLista||[]).includes("Outros")},
+  {k:"embalagem",l:"Embalagem",t:"radio",op:["Simples","Caixa de madeira"],w:1},
+  {k:"marco",l:"Marco",t:"radio",op:["Marco desmontado","Marco montado"],w:1},
+  {k:"forn",l:"Fornecimento",t:"check",op:["Arremates","Cantoneira","Chapa lisa","Soleira","Contramarco","Tampa de madeira","Nenhum"]},
+ ]},
+ {id:"rem",titulo:"Remoção e empecilhos",pg:2,campos:[
+  {k:"remocao",l:"Necessário remoção",t:"yn",w:1},
+  {k:"remTipo",l:"Remoção",t:"radio",op:["Total","Parcial"],w:1,se:sim("remocao")},
+  {k:"remParcial",l:"Especifique a remoção parcial",t:"text",se:d=>d.remocao==="Sim"&&d.remTipo==="Parcial"},
+  {k:"remResp",l:"Responsabilidade da remoção",t:"radio",op:["Cliente","Atenua Som"],w:1,se:sim("remocao")},
+  {k:"afastPeca",l:"Afastamento da peça existente",t:"yn",w:1,se:sim("remocao")},
+  {k:"requadro",l:"Requadro de vão",t:"yn",w:1,se:sim("remocao")},
+  {k:"matRemovido",l:"Material removido",t:"radio",op:["Deixar no local","Levar para fábrica"],w:1,se:sim("remocao")},
+  {k:"rodape",l:"Remoção de rodapé",t:"yn",w:1},
+  {k:"rodapeResp",l:"Quem remove o rodapé",t:"radio",op:["Cliente","Atenua Som"],w:1,se:sim("rodape")},
+  {k:"empecilho",l:"Remover empecilho",t:"radio",op:["Não tem empecilho","Atenua Som remove","Cliente remove"]},
+  {k:"empecilhoQual",l:"Qual empecilho",t:"text",se:d=>d.empecilho&&d.empecilho!=="Não tem empecilho"},
+ ]},
+ {id:"obs",titulo:"Observações",pg:4,campos:[
+  {k:"obsCliente",l:"Observações responsabilidade cliente",t:"area",w:1,ph:"Se não houver, escreva: Nenhuma"},
+  {k:"obsAtenua",l:"Observações responsabilidade Atenua",t:"area",w:1,ph:"Se não houver, escreva: Nenhuma"},
+ ]},
+];
+const FOTOS = [
+ {k:"frente",l:"Vão inteiro, de frente",obr:true},
+ {k:"largura",l:"Trena na largura"},
+ {k:"altura",l:"Trena na altura"},
+ {k:"piso",l:"Piso / soleira do vão"},
+];
+const MAX_EXTRAS = 4;
+
+/* ---------- estado ---------- */
+let S = {user:null, view:"login", editItem:null};
+let LISTA = [];   // todas as OS deste aparelho
+let OS = null;    // OS aberta
+function novoItem(){ return {id:Math.random().toString(36).slice(2,9), campos:{dataMed:new Date().toLocaleDateString("sv"),respMed:S.user?S.user.nome:""}, fotos:{}, extras:[]}; }
+
+const Store = {
+  db:null,
+  open(){ if(this.db) return Promise.resolve(this.db); return new Promise((res,rej)=>{ try{ const r=indexedDB.open("os-atenua",1); r.onupgradeneeded=()=>r.result.createObjectStore("kv"); r.onsuccess=()=>{this.db=r.result;res(r.result)}; r.onerror=()=>rej(r.error);}catch(e){rej(e)} }); },
+  async get(k){ try{ const db=await this.open(); return await new Promise(res=>{ const q=db.transaction("kv").objectStore("kv").get(k); q.onsuccess=()=>res(q.result||null); q.onerror=()=>res(null); }); }catch(e){ return null; } },
+  async set(k,v){ try{ const db=await this.open(); db.transaction("kv","readwrite").objectStore("kv").put(v,k); }catch(e){} },
+};
+let saveT=null;
+function salvar(){ clearTimeout(saveT); saveT=setTimeout(()=>Store.set("estado",JSON.parse(JSON.stringify({user:S.user,view:S.view,editItem:S.editItem,osId:OS&&OS.id,lista:LISTA}))),400); }
+function mexeu(){ if(OS){ OS.atualizadaEm=new Date().toISOString(); if(OS.status==="rascunho") OS.emitida=null; } salvar(); }
+
+/* ---------- utilidades ---------- */
+const $=(s,el=document)=>el.querySelector(s);
+function h(tag,attrs,...kids){ const e=document.createElement(tag); for(const [k,v] of Object.entries(attrs||{})){ if(v==null||v===false) continue; if(k.startsWith("on")) e.addEventListener(k.slice(2),v); else if(k==="class") e.className=v; else e.setAttribute(k,v===true?"":v); } for(const c of kids.flat()){ if(c==null||c===false) continue; e.append(c.nodeType?c:document.createTextNode(c)); } return e; }
+const pad2=n=>String(n).padStart(2,"0");
+function fmtD(iso){ if(!iso) return ""; const [a,m,d]=iso.split("-"); return `${d}/${m}/${a}`; }
+function fmtDT(dt){ const d=new Date(dt); return `${pad2(d.getDate())}/${pad2(d.getMonth()+1)}/${d.getFullYear()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`; }
+function gpsTxt(g){ return g&&g.lat!=null ? `${g.lat.toFixed(5)}, ${g.lon.toFixed(5)} (±${g.acc} m)` : "sem localização"; }
+function toast(msg){ document.querySelectorAll(".toast").forEach(t=>t.remove()); const t=h("div",{class:"toast",role:"status"},msg); document.body.append(t); setTimeout(()=>t.remove(),3200); }
+function maskCEP(v){ const d=v.replace(/\D/g,"").slice(0,8); return d.length>5?d.slice(0,5)+"-"+d.slice(5):d; }
+function maskTel(v){ const d=v.replace(/\D/g,"").slice(0,11); if(d.length<=2) return d; if(d.length<=6) return `(${d.slice(0,2)}) ${d.slice(2)}`; if(d.length<=10) return `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`; return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`; }
+
+let ultimaPos=null;
+function getPos(timeout=8000){
+  return new Promise(res=>{
+    if(ultimaPos && Date.now()-ultimaPos.t<120000) return res(ultimaPos.p);
+    if(!navigator.geolocation) return res({erro:"Este aparelho não informa localização"});
+    try{ navigator.geolocation.getCurrentPosition(
+      p=>{ const r={lat:p.coords.latitude,lon:p.coords.longitude,acc:Math.round(p.coords.accuracy)}; ultimaPos={t:Date.now(),p:r}; res(r); },
+      e=>res({erro: PREVIEW ? "Localização indisponível nesta pré-visualização" : e.code===1 ? "Permissão de localização negada" : "Não foi possível obter a localização"}),
+      {enableHighAccuracy:true,timeout,maximumAge:60000});
+    }catch(e){ res({erro:"Localização indisponível"}); }
+  });
+}
+
+/* ---------- desenho das tipologias ---------- */
+function drawTipo(cv,tipo,opts={}){
+  const c=cv.getContext("2d"), W=cv.width, H=cv.height;
+  const ink=opts.ink||"#1b2a30", glass=opts.glass||"#d4ecf0";
+  c.clearRect(0,0,W,H); if(opts.bg){ c.fillStyle=opts.bg; c.fillRect(0,0,W,H); }
+  const p=Math.round(Math.min(W,H)*0.06), x0=p,y0=p,w=W-2*p,hh=H-2*p;
+  const lw=Math.max(1.5,Math.min(W,H)/110), fr=Math.max(3,Math.min(W,H)/28);
+  c.lineWidth=lw; c.strokeStyle=ink; c.fillStyle=ink; c.lineJoin="round";
+  c.strokeRect(x0,y0,w,hh); c.strokeRect(x0+fr,y0+fr,w-2*fr,hh-2*fr);
+  const ix=x0+fr,iy=y0+fr,iw=w-2*fr,ih=hh-2*fr;
+  const ln=(a,b,x,y,dash)=>{ c.save(); if(dash) c.setLineDash([lw*3,lw*2.5]); c.beginPath(); c.moveTo(a,b); c.lineTo(x,y); c.stroke(); c.restore(); };
+  const pane=(x,y,ww,hh2)=>{ const g=fr*.5; c.save(); c.fillStyle=glass; c.fillRect(x+g,y+g,ww-2*g,hh2-2*g); c.restore(); c.strokeRect(x+g,y+g,ww-2*g,hh2-2*g); return [x+g,y+g,ww-2*g,hh2-2*g]; };
+  const arrow=(cx,cy,dir,len)=>{ const a=len/2, s=Math.max(4,len*.28); const pts=dir===0?[[-a,0],[a,0]]:[[-a*dir,0],[a*dir,0]]; ln(cx+pts[0][0],cy,cx+pts[1][0],cy); const heads=dir===0?[-1,1]:[dir]; for(const d of heads){ c.beginPath(); c.moveTo(cx+a*d,cy); c.lineTo(cx+(a-s)*d,cy-s*.6); c.lineTo(cx+(a-s)*d,cy+s*.6); c.closePath(); c.fill(); } };
+  const n={"Correr 2 folhas":2,"Correr 3 folhas":3,"Correr 4 folhas":4}[tipo];
+  if(n){ const pw=iw/n; for(let i=0;i<n;i++){ pane(ix+i*pw,iy,pw,ih); const dir = n===3 ? (i===0?1:i===2?-1:0) : (i<n/2?1:-1); arrow(ix+(i+.5)*pw,iy+ih/2,dir,Math.min(pw*.45,ih*.4)); } return; }
+  if(tipo==="Giro 1 folha"){ const [x,y,ww,h2]=pane(ix,iy,iw,ih); ln(x+ww,y,x,y+h2/2,true); ln(x+ww,y+h2,x,y+h2/2,true); return; }
+  if(tipo==="Giro 2 folhas"){ for(let i=0;i<2;i++){ const [x,y,ww,h2]=pane(ix+i*iw/2,iy,iw/2,ih); const hx=i===0?x+ww:x, ox=i===0?x:x+ww; ln(ox,y,hx,y+h2/2,true); ln(ox,y+h2,hx,y+h2/2,true);} return; }
+  if(tipo==="Maxim-ar"){ const [x,y,ww,h2]=pane(ix,iy,iw,ih); ln(x,y,x+ww/2,y+h2,true); ln(x+ww,y,x+ww/2,y+h2,true); return; }
+  if(tipo==="Basculante"){ const [x,y,ww,h2]=pane(ix,iy,iw,ih); ln(x,y+h2/2,x+ww,y+h2/2,true); ln(x,y,x+ww/2,y+h2/2); ln(x+ww,y,x+ww/2,y+h2/2); return; }
+  if(tipo==="Pivotante"){ const [x,y,ww,h2]=pane(ix,iy,iw,ih); ln(x+ww*.3,y-fr*.3,x+ww*.3,y+h2+fr*.3,true); c.beginPath(); c.arc(x+ww*.3,y+h2/2,Math.min(ww,h2)*.08,0,Math.PI*2); c.stroke(); return; }
+  const [x,y,ww,h2]=pane(ix,iy,iw,ih);
+  c.font=`600 ${Math.round(Math.min(ww,h2)*.18)}px sans-serif`; c.textAlign="center"; c.textBaseline="middle"; c.fillStyle=ink;
+  c.fillText(tipo==="Fixo"?"FIXO":"?",x+ww/2,y+h2/2);
+}
+function tipoCanvas(tipo,w,hgt,opts){ const cv=h("canvas",{width:w,height:hgt,"aria-hidden":"true"}); if(tipo) drawTipo(cv,tipo,opts); return cv; }
+function corTinta(){ const s=getComputedStyle(document.documentElement); return {ink:s.getPropertyValue("--fg").trim(),glass:s.getPropertyValue("--accent-soft").trim()}; }
+
+/* ---------- formulário ---------- */
+function renderSchema(schema,data,root,opts={}){
+  const wraps=[];
+  for(const sec of schema){
+    const grid=h("div",{class:"grid"});
+    for(const f of sec.campos){ const w=(opts.trav&&opts.trav.includes(f.k))?fieldTravado(f,data,opts):fieldEl(f,data,()=>{ if(f.k.startsWith("fecho")) data.concha=fechoTxt(data); if(f.k.startsWith("cor")&&f.k!=="cor"){ data.cor=corTxt(data); const c=document.getElementById("calc-cor"); if(c) c.textContent=data.cor||"—"; } refresh(); mexeu(); if(opts.onChange) opts.onChange(f); }); wraps.push([f,w]); grid.append(w); }
+    root.append(h("section",{class:"sec",id:"sec-"+sec.id},h("h3",{},sec.titulo),grid));
+  }
+  function refresh(){ for(const [f,w] of wraps) w.hidden = f.t==="hidden" || (f.se ? !f.se(data) : false); }
+  refresh();
+}
+function fieldTravado(f,d,opts){
+  const conf=opts.conf, ok=conf&&conf.includes(f.k);
+  const check=h("button",{type:"button",class:"check"+(ok?" on":""),"aria-pressed":ok?"true":"false",onclick:()=>{ if(!conf) return; const i=conf.indexOf(f.k); if(i>=0) conf.splice(i,1); else conf.push(f.k); mexeu(); const sy=scrollY; render(); scrollTo(0,sy); }},ok?"✓ Conferido":"Check");
+  return h("div",{class:"field travado"+(ok?" ok":"")+(f.w?" half":""),id:"f-"+f.k},
+    h("div",{class:"lab"},f.l),
+    h("div",{class:"val"},h("span",{},fmtCampo(f,d)),h("span",{class:"chip info"},opts.origem||"do pedido")),
+    h("div",{class:"row",style:"gap:14px"},conf?check:null,
+    h("button",{type:"button",class:"link",onclick:()=>{ const i=opts.trav.indexOf(f.k); if(i>=0) opts.trav.splice(i,1); if(conf){ const j=conf.indexOf(f.k); if(j>=0) conf.splice(j,1); } hist(OS,`${S.user.nome} liberou para edição "${f.l}" (${opts.origem==="da OS"?"veio da OS do vendedor":"veio do pedido de venda"})`); mexeu(); const sy=scrollY; render(); scrollTo(0,sy); setTimeout(()=>{ const el=document.getElementById("i-"+f.k)||document.querySelector("#f-"+f.k+" button"); if(el) el.focus(); },50); }},"Alterar")),
+    h("div",{class:"err"}));
+}
+function pendConferir(schema,d,trav,conf){
+  const e=[]; if(!trav) return e;
+  for(const sec of schema) for(const f of sec.campos) if(trav.includes(f.k)&&(!f.se||f.se(d))&&!(conf||[]).includes(f.k)) e.push({sec:sec.titulo,k:f.k,l:f.l,m:"Confira este dado do pedido e toque em Check"});
+  return e;
+}
+function validarPedido(){ return validar(PEDIDO,OS.pedido); }
+function fechoTxt(d){ return d.fecho==="Outro"?(d.fechoOutro||""):(d.fecho||""); }
+function fechoDe(txt){
+  const u=String(txt||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase();
+  if(!u.trim()) return {};
+  const op=/CEGA/.test(u)?"Concha cega":/LEVE\s*TOQUE/.test(u)?"Concha leve toque":/CREMONA/.test(u)?"Cremona":/SEM\s*MOLA/.test(u)?"Concha com trava sem mola":/MOLA/.test(u)?"Concha com trava e mola":"Outro";
+  return op==="Outro"?{fecho:op,fechoOutro:String(txt).trim()}:{fecho:op};
+}
+function corTxt(d){
+  const b=d.corBrilho?d.corBrilho.toLowerCase():"";
+  if(d.corTipo==="Anodização") return ["Anodização",d.corAnod,b].filter(Boolean).join(" ");
+  if(d.corTipo==="Pintura eletrostática"){ const r=String(d.corRal||"").replace(/\D/g,""); return ["Pintura eletrostática",r?`RAL${r}${d.corBrilho==="Brilhante"?"B":d.corBrilho==="Fosco"?"F":""}`:"",b?`(${b})`:""].filter(Boolean).join(" "); }
+  return d.cor||"";
+}
+function corPartes(txt){
+  const t=String(txt||""), u=t.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase();
+  if(/ANODIZ/.test(u)){ const resto=t.replace(/anodiza[çc][ãa]o/i,"").replace(/\b(fosc[oa]|brilhante)\b/ig,"").trim(); return {corTipo:"Anodização",corAnod:resto?resto[0].toUpperCase()+resto.slice(1).toLowerCase():"",corBrilho:/FOSC/.test(u)?"Fosco":/BRILHANTE/.test(u)?"Brilhante":""}; }
+  const m=/RAL\s*(\d{4})\s*([BF])?\b/.exec(u);
+  if(/PINTURA|RAL/.test(u)) return {corTipo:"Pintura eletrostática",corRal:m?m[1]:"",corBrilho:m&&m[2]==="B"||/BRILHANTE/.test(u)?"Brilhante":m&&m[2]==="F"||/FOSC/.test(u)?"Fosco":""};
+  return {};
+}
+function fieldEl(f,d,changed){
+  const id="i-"+f.k;
+  if(f.t==="hidden") return h("div",{hidden:true,id:"f-"+f.k});
+  if(f.t==="calc") return h("div",{class:"field calc",id:"f-"+f.k},h("div",{class:"lab"},f.l+" (como sai na OS impressa)"),h("div",{class:"val",id:"calc-"+f.k},d[f.k]||"—"),h("div",{class:"err"}));
+  const wrap=h("div",{class:"field"+(f.w?" half":""),id:"f-"+f.k});
+  const lab=["radio","yn","check","tipo"].includes(f.t)
+    ? h("div",{class:"lab",id:"l-"+f.k},f.l, f.opt?h("span",{class:"opt"}," (opcional)"):null)
+    : h("label",{for:id},f.l, f.opt?h("span",{class:"opt"}," (opcional)"):null);
+  wrap.append(lab);
+  const err=h("div",{class:"err","aria-live":"polite"});
+  const set=v=>{ d[f.k]=v; changed(); if(wrap.classList.contains("invalid")){ wrap.classList.remove("invalid"); err.textContent=""; } };
+  if(["text","email","tel","cep","date","num"].includes(f.t)){
+    const type={email:"email",tel:"tel",date:"date",num:"text"}[f.t]||"text";
+    const inp=h("input",{id,type,value:d[f.k]||"",placeholder:f.ph||null,autocomplete:f.ac||"off",
+      inputmode:f.t==="num"||f.t==="cep"||f.im?"numeric":f.t==="tel"?"tel":f.t==="email"?"email":null,
+      list:f.list?"dl-"+f.k:null});
+    inp.addEventListener("input",()=>{ if(f.t==="cep") inp.value=maskCEP(inp.value); if(f.t==="tel") inp.value=maskTel(inp.value); if(f.t==="num") inp.value=inp.value.replace(/[^\d]/g,""); set(inp.value.trim()); });
+    if(f.u) wrap.append(h("div",{class:"unit"},inp,h("span",{},f.u))); else wrap.append(inp);
+    if(f.list) wrap.append(h("datalist",{id:"dl-"+f.k},f.list.map(o=>h("option",{value:o}))));
+  } else if(f.t==="area"){
+    const ta=h("textarea",{id,placeholder:f.ph||null}); ta.value=d[f.k]||""; ta.addEventListener("input",()=>set(ta.value.trim())); wrap.append(ta);
+  } else if(f.t==="select"){
+    const sel=h("select",{id},h("option",{value:""},"Escolha"),f.op.map(o=>h("option",{value:o,selected:d[f.k]===o},o)));
+    sel.addEventListener("change",()=>set(sel.value)); wrap.append(sel);
+  } else if(f.t==="radio"||f.t==="yn"){
+    const ops=f.t==="yn"?YN:f.op;
+    const seg=h("div",{class:"seg",role:"group","aria-labelledby":"l-"+f.k});
+    for(const o of ops){ const b=h("button",{type:"button","aria-pressed":String(d[f.k]===o)},o); b.addEventListener("click",()=>{ seg.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed","false")); b.setAttribute("aria-pressed","true"); set(o); }); seg.append(b); }
+    wrap.append(seg);
+  } else if(f.t==="check"){
+    const seg=h("div",{class:"seg",role:"group","aria-labelledby":"l-"+f.k});
+    for(const o of f.op){ const b=h("button",{type:"button","aria-pressed":String((d[f.k]||[]).includes(o))},o);
+      b.addEventListener("click",()=>{ let v=(d[f.k]||[]).slice(); if(v.includes(o)) v=v.filter(x=>x!==o); else { if(o==="Nenhum") v=[]; else v=v.filter(x=>x!=="Nenhum"); v.push(o); }
+        seg.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",String(v.includes(x.textContent)))); set(v); });
+      seg.append(b); }
+    wrap.append(seg);
+  } else if(f.t==="tipo"){
+    const tiles=h("div",{class:"tiles",role:"group","aria-labelledby":"l-"+f.k}); const cor=corTinta();
+    for(const t of TIPOLOGIAS){ const b=h("button",{type:"button",class:"tile","aria-pressed":String(d[f.k]===t)},tipoCanvas(t,180,135,cor),t);
+      b.addEventListener("click",()=>{ tiles.querySelectorAll(".tile").forEach(x=>x.setAttribute("aria-pressed","false")); b.setAttribute("aria-pressed","true"); set(t); }); tiles.append(b); }
+    wrap.append(tiles);
+  }
+  wrap.append(err);
+  return wrap;
+}
+function validar(schema,d){
+  const errs=[];
+  for(const sec of schema) for(const f of sec.campos){
+    if(f.se && !f.se(d)) continue;
+    const v=d[f.k]; const vazio=v==null||v===""||(Array.isArray(v)&&!v.length); let m=null;
+    if(vazio){ if(!f.opt) m="Preencha este campo"; }
+    else if(f.t==="email" && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)) m="E-mail inválido";
+    else if(f.t==="cep" && !/^\d{5}-\d{3}$/.test(v)) m="O CEP tem 8 dígitos";
+    else if(f.t==="tel" && v.replace(/\D/g,"").length<10) m="Inclua o DDD";
+    else if(f.t==="num"){ const n=Number(v); if(n<f.min||n>f.max) m=`Valor entre ${f.min} e ${f.max} ${f.u||""}`.trim(); }
+    if(m) errs.push({sec:sec.titulo,k:f.k,l:f.l,m});
+  }
+  return errs;
+}
+function validarItem(it){
+  const e=validar(ITEM,it.campos);
+  if(it.campos.fixacao==="Sobreposta" && it.campos.acrescimo==="Não") e.unshift({sec:"Medidas",k:"acrescimo",l:"Acréscimo",m:"Peça sobreposta tem acréscimo obrigatório"});
+  for(const f of FOTOS) if(f.obr&&!it.fotos[f.k]) e.push({sec:"Fotos",k:"foto-"+f.k,l:"Foto: "+f.l,m:"Tire esta foto"});
+  return e;
+}
+function marcarErros(errs){
+  document.querySelectorAll(".field.invalid").forEach(w=>{ w.classList.remove("invalid"); const e=w.querySelector(".err"); if(e) e.textContent=""; });
+  for(const e of errs){ const w=document.getElementById("f-"+e.k); if(!w) continue; w.classList.add("invalid"); const el=w.querySelector(".err"); if(el) el.textContent=e.m; }
+  const first=errs.length&&document.getElementById("f-"+errs[0].k); if(first) first.scrollIntoView({behavior:"smooth",block:"center"});
+}
+
+/* ---------- fotos ---------- */
+function loadImg(file){ return new Promise((res,rej)=>{ const u=URL.createObjectURL(file); const i=new Image(); i.onload=()=>{res(i); setTimeout(()=>URL.revokeObjectURL(u),1000)}; i.onerror=rej; i.src=u; }); }
+async function processarFoto(file,legenda){
+  const [img,pos]=await Promise.all([loadImg(file),getPos()]);
+  let w=img.naturalWidth,hh=img.naturalHeight; const s=Math.min(1,1280/Math.max(w,hh)); w=Math.round(w*s); hh=Math.round(hh*s);
+  const cv=document.createElement("canvas"); cv.width=w; cv.height=hh; const x=cv.getContext("2d"); x.drawImage(img,0,0,w,hh);
+  const ts=new Date();
+  carimbo(x,w,hh,`${legenda} · ${fmtDT(ts)} · ${pos.lat!=null?gpsTxt(pos):"sem localização"} · ${S.user.nome}`);
+  return {data:cv.toDataURL("image/jpeg",.72),w,h:hh,ts:ts.toISOString(),gps:pos.lat!=null?pos:null,gpsErro:pos.erro||null,por:S.user.nome};
+}
+function carimbo(x,w,hh,txt){ const fs=Math.max(13,Math.round(w/52)); x.font=`600 ${fs}px sans-serif`; x.fillStyle="rgba(0,0,0,.62)"; x.fillRect(0,hh-fs*1.9,w,fs*1.9); x.fillStyle="#fff"; x.textBaseline="middle"; x.fillText(txt,fs*.6,hh-fs*.95,w-fs*1.2); }
+function fotoSlot(it,key,legenda,onSet,opcional){
+  const f=key.startsWith("extra")?it.extras[+key.slice(5)]:it.fotos[key];
+  const id="cam-"+key;
+  const inp=h("input",{type:"file",accept:"image/*",capture:"environment",id});
+  const lab=h("label",{class:"shot"+(f?" has":""),for:id});
+  if(f){ lab.append(h("img",{src:f.data,alt:legenda}),h("span",{class:"cap"},`${legenda} · ${fmtDT(f.ts)}${f.gps?"":" · sem GPS"}`)); }
+  else { lab.append(camIcon(),h("span",{class:"cap"},legenda),h("span",{class:"req"},opcional?"Opcional":"Obrigatória")); }
+  lab.append(inp);
+  inp.addEventListener("change",async()=>{ const file=inp.files&&inp.files[0]; if(!file) return; toast("Processando foto…"); try{ const p=await processarFoto(file,legenda); onSet(p); mexeu(); render(); if(!p.gps) toast(p.gpsErro||"Foto salva sem localização"); else toast("Foto salva"); }catch(e){ toast("Não consegui abrir essa imagem. Tente outra vez."); } });
+  return h("div",{class:"field",id:"f-foto-"+key},lab,h("div",{class:"err"}));
+}
+function camIcon(){ const ns="http://www.w3.org/2000/svg"; const s=document.createElementNS(ns,"svg"); s.setAttribute("viewBox","0 0 24 24"); s.setAttribute("class","cam"); s.innerHTML='<path d="M4 7h3l2-2.5h6L17 7h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12.5" r="3.6" fill="none" stroke="currentColor" stroke-width="1.6"/>'; return s; }
+
+/* ---------- telas ---------- */
+const app=$("#app");
+function render(){
+  app.replaceChildren();
+  document.querySelectorAll(".bar").forEach(b=>b.remove());
+  if(S.view==="login") return telaLogin();
+  app.append(topo());
+  const main=h("main",{});
+  app.append(main);
+  if(S.view!=="lista"&&S.view!=="anexar"&&!OS) S.view="lista";
+  if(S.view==="pedido") telaPedido(main);
+  else if(S.view==="item") telaItem(main);
+  else if(S.view==="resumo") telaResumo(main);
+  else if(S.view==="os") telaOS(main);
+  else if(S.view==="remedicao") telaRemedicao(main);
+  else if(S.view==="ritem") telaRItem(main);
+  else if(S.view==="anexar") telaAnexar(main);
+  else if(S.view==="conferencia") telaConferencia(main);
+  else telaLista(main);
+  salvar();
+}
+function topo(){
+  const n=OS&&OS.pedido.numPedido;
+  return h("header",{class:"top"},h("div",{class:"top-in"},
+    h("div",{class:"brand"},"Ordem de Serviço",h("small",{},OS?(n?`Pedido ${n}`:"Novo pedido"):PERFIL_NOME[S.user.perfil])),
+    h("div",{class:"sp"}),
+    h("div",{class:"who"},S.user.nome,h("br"),h("button",{type:"button",class:"ghost small",style:"min-height:32px;padding:2px 0;border:0;color:var(--accent)",onclick:()=>{ S.user=null; OS=null; S.view="login"; salvar(); render(); }},"Sair"))));
+}
+function telaLogin(){
+  const grupos=["vendedor","remedidor","auditoria"];
+  const sel=h("select",{id:"i-vend"},h("option",{value:""},"Escolha seu nome"),grupos.map(g=>h("optgroup",{label:PERFIL_NOME[g]},USUARIOS.filter(u=>u.perfil===g).map(u=>h("option",{value:u.nome},u.nome)))));
+  const pin=h("input",{id:"i-pin",type:"password",inputmode:"numeric",autocomplete:"off",placeholder:"PIN"});
+  const err=h("div",{class:"err"});
+  const entrar=e=>{ e.preventDefault(); const v=USUARIOS.find(x=>x.nome===sel.value); if(!v){ err.textContent="Escolha seu nome"; return; } if(pin.value!==v.pin){ err.textContent="PIN incorreto"; return; }
+    S.user={nome:v.nome,perfil:v.perfil}; S.view="lista"; OS=null; render(); getPos(); };
+  app.append(h("main",{},h("form",{class:"card login",onsubmit:entrar},
+    h("img",{src:LOGO,alt:"Atenua Group"}),
+    h("h1",{},"Ordem de Serviço"),
+    h("p",{class:"muted",style:"margin:0"},"Entre com seu nome e PIN. Tudo o que você fizer fica registrado no seu nome, com data, hora e local."),
+    h("div",{class:"field"},h("label",{for:"i-vend"},"Quem é você"),sel),
+    h("div",{class:"field"},h("label",{for:"i-pin"},"PIN"),pin),
+    err,
+    h("button",{class:"primary",type:"submit"},"Entrar"),
+    h("p",{class:"small muted",style:"margin:0"},"Protótipo: o PIN de teste é 1234 para todos."))));
+}
+function statusChip(n){ return n ? h("span",{class:"chip warn dot"},n===1?"Falta 1 item":`Faltam ${n} itens`) : h("span",{class:"chip ok dot"},"Completo"); }
+function tipoTxt(d){ const b=d.tipologia==="Outra"?(d.tipoOutra||"Outra"):(d.tipologia||""); return b+(d.persiana==="Sim"?" com persiana":""); }
+function resumoItem(it){ const d=it.campos; const p=[tipoTxt(d), d.largura&&d.altura?`${d.largura} × ${d.altura} mm`:null, d.linha].filter(Boolean); return p.join(" · ")||"Ainda não preenchido"; }
+function telaResumo(main){
+  if(PREVIEW) main.append(h("div",{class:"note"},"Pré-visualização: aqui o celular não libera a localização, então o GPS aparece como indisponível. Na versão hospedada ele é obrigatório."));
+  const eP=validarPedido();
+  const tipo=OS.pedido.tipoOS;
+  main.append(h("section",{class:"card"},
+    h("div",{class:"row"},h("h2",{},"Dados do pedido"),h("div",{class:"sp"}),statusChip(eP.length)),
+    h("div",{class:"small muted"}, OS.pedido.nome?`${OS.pedido.nome} · ${OS.pedido.cidade||""}`:"Cliente, endereço e logística da obra. Preenchidos uma vez para todo o pedido."),
+    OS.pedidoVenda?h("div",{class:"small"},`Montada do pedido de venda ${OS.pedidoVenda.dados.numero} (${OS.pedidoVenda.arquivo}). Falta completar a logística da obra.`):null,
+    OS.pedidoVenda&&OS.status==="rascunho"?trocarPdfUI():null,
+    tipo?h("div",{},h("span",{class:"ostype",style:`background:var(--${tipo.includes("Rosa")?"rosa":tipo.includes("Verde")?"verde":"amarela"})`},tipo)):null,
+    h("button",{type:"button",class:eP.length?"primary":"",onclick:()=>{S.view="pedido";render();scrollTo(0,0);}},eP.length?"Preencher dados do pedido":"Revisar dados do pedido")));
+
+  const lista=h("section",{class:"card"},h("div",{class:"row"},h("h2",{},`Itens do pedido (${OS.itens.length})`)),
+    h("div",{class:"small muted"},"Cada esquadria é um item, todos na mesma OS. Cada item gera 4 páginas: ficha técnica, desenho, fotos e observações."));
+  const cor=corTinta();
+  OS.itens.forEach((it,i)=>{
+    const e=validarItem(it); const nf=FOTOS.filter(f=>it.fotos[f.k]).length;
+    const conf=h("div",{class:"inline-confirm",hidden:true},"Remover este item?",h("button",{type:"button",class:"danger",onclick:()=>{ OS.itens.splice(i,1); mexeu(); render(); }},"Remover"),h("button",{type:"button",onclick:()=>{conf.hidden=true;}},"Cancelar"));
+    lista.append(h("div",{class:"item"},
+      tipoCanvas(it.campos.tipologia||"Outra",128,96,cor),
+      h("div",{class:"info"},
+        h("div",{class:"t"},`Item ${i+1} · ${it.campos.ambiente||"sem ambiente"}`),
+        h("div",{class:"d"},resumoItem(it)),
+        h("div",{class:"row",style:"margin-top:6px"},statusChip(e.length),h("span",{class:"small muted"},`Fotos ${nf}`)),
+        h("div",{class:"row",style:"margin-top:8px"},
+          h("button",{type:"button",class:e.length?"primary":"",onclick:()=>{S.editItem=it.id;S.view="item";render();scrollTo(0,0);}},e.length?"Continuar":"Revisar"),
+          it.origem?null:h("button",{type:"button",class:"ghost danger",onclick:()=>{conf.hidden=false;}},"Remover")),
+        conf)));
+  });
+  if(!OS.pedidoVenda) lista.append(h("button",{type:"button",class:OS.itens.length?"":"primary",onclick:()=>{ const it=novoItem(); OS.itens.push(it); mexeu(); S.editItem=it.id; S.view="item"; render(); scrollTo(0,0); }},"+ Adicionar item"));
+  main.append(lista);
+
+
+  const errsAll=[]; eP.forEach(e=>errsAll.push({...e,onde:"Pedido"}));
+  OS.itens.forEach((it,i)=>validarItem(it).forEach(e=>errsAll.push({...e,onde:`Item ${i+1}`,item:it.id})));
+  const fin=h("section",{class:"card"+(OS.emitida?" done":"")},h("h2",{},"Gerar OS"));
+  if(OS.emitida){
+    const em=OS.emitida;
+    fin.append(h("div",{},`OS emitida por ${em.por} em ${fmtDT(em.em)}.`),h("div",{class:"small muted"},`Local: ${em.gps?gpsTxt(em.gps):em.gpsErro} · ${OS.itens.length} ${OS.itens.length===1?"item":"itens"} · ${em.paginas} páginas · ${em.arquivo}`));
+  }
+  if(!OS.itens.length) fin.append(h("div",{class:"small muted"},"Adicione pelo menos um item."));
+  else if(errsAll.length){
+    const grupos={}; errsAll.forEach(e=>{ (grupos[e.onde]=grupos[e.onde]||[]).push(e); });
+    fin.append(h("div",{class:"small"},`Ainda faltam ${errsAll.length} informações para emitir a OS:`));
+    const ul=h("ul",{class:"errs"});
+    for(const [onde,es] of Object.entries(grupos)){ ul.append(h("li",{},h("a",{tabindex:"0",role:"button",onclick:()=>irPara(es[0])},`${onde}: ${es.length} pendente${es.length>1?"s":""}`),h("span",{class:"small muted"}," ("+es.slice(0,3).map(e=>e.l).join(", ")+(es.length>3?"…":"")+")"))); }
+    fin.append(ul);
+  }
+  const gerar=h("button",{type:"button",class:"primary wide",disabled:!OS.itens.length||errsAll.length?true:null},"Conferir resumo e finalizar");
+  gerar.addEventListener("click",()=>{ S.view="conferencia"; render(); scrollTo(0,0); });
+  fin.append(gerar);
+  main.append(fin);
+
+  main.append(h("section",{class:"card"},h("div",{class:"row"},
+    OS.pedidoVenda?null:h("button",{type:"button",class:"ghost",onclick:preencherExemplo},"Preencher com exemplo")),
+    h("div",{class:"small muted"},"O rascunho fica salvo neste celular enquanto você preenche. OS de Remedição (rosa) vão para a remedição depois de emitidas.")));
+  barra(h("button",{type:"button",onclick:irLista},"Voltar para a lista"));
+}
+function irPara(e){ if(e.item){ S.editItem=e.item; S.view="item"; } else S.view="pedido"; render(); setTimeout(()=>{ const errs=e.item?validarItem(OS.itens.find(i=>i.id===e.item)):validarPedido(); marcarErros(errs); },50); }
+function barra(...btns){ document.body.append(h("div",{class:"bar"},h("div",{class:"bar-in"},btns))); }
+function telaPedido(main){
+  main.append(h("h1",{},"Dados do pedido"));
+  if(OS.pedidoVenda) main.append(h("div",{class:"note"},"Campos marcados \"do pedido\" vieram do pedido de venda. Preencha o resto."));
+  renderSchema(PEDIDO,OS.pedido,main,{trav:OS.travados||null});
+  barra(h("button",{type:"button",onclick:()=>{S.view="resumo";render();scrollTo(0,0);}},"Voltar"),
+        h("button",{type:"button",class:"primary",onclick:()=>{ const e=validarPedido(); if(e.length){ marcarErros(e); toast(e.length===1?"Falta 1 informação":`Faltam ${e.length} informações`); } else { S.view="resumo"; render(); scrollTo(0,0); toast("Dados do pedido completos"); } }},"Concluir"));
+}
+function telaItem(main){
+  const idx=OS.itens.findIndex(i=>i.id===S.editItem); if(idx<0){ S.view="resumo"; return render(); }
+  const it=OS.itens[idx];
+  main.append(h("h1",{},`Item ${idx+1} de ${OS.itens.length}`));
+  if(it.origem) main.append(h("div",{class:"note"},`Peça ${it.origem.unidade} de ${it.origem.de} do item ${it.origem.itemPedido} do pedido. Campos marcados "do pedido" vieram do pedido de venda.`));
+  if(idx>0&&!it.origem) main.append(h("div",{class:"row"},h("button",{type:"button",class:"ghost small",onclick:()=>{ const prev=OS.itens[idx-1].campos; for(const k of ["linha","vidro","corTipo","corRal","corAnod","corBrilho","cor","posFolhas","fecho","fechoOutro","concha","pintExt","ralExt","fixacao","posicao","materialVao","contramarco","refilar","tipoContramarco","embalagem","marco"]) if(prev[k]!=null) it.campos[k]=Array.isArray(prev[k])?prev[k].slice():prev[k]; mexeu(); render(); toast("Linha, vidro, cor, instalação e vão copiados do item anterior. Confira."); }},"Copiar produto e vão do item anterior")));
+  const cq=secCroqui(it);
+  renderSchema(ITEM,it.campos,main,{trav:it.travados||null,onChange:f=>{ if(["tipologia","largura","altura"].includes(f.k)) cq.atualizarBase(); if(f.k==="fixacao"&&it.campos.fixacao==="Sobreposta"&&it.campos.acrescimo!=="Sim"){ it.campos.acrescimo="Sim"; const sy=scrollY; render(); scrollTo(0,sy); toast("Sobreposta: marquei que tem acréscimo. Informe quanto em Medidas."); } }});
+  main.insertBefore(cq,$("#sec-med",main));
+  const fotos=h("section",{class:"sec",id:"sec-fotos"},h("h3",{},"Fotos"),
+    h("div",{class:"small muted"},"Tire as fotos na hora, pelo celular. Cada foto recebe data, hora, local e o seu nome."));
+  const g=h("div",{class:"shots"});
+  for(const f of FOTOS) g.append(fotoSlot(it,f.k,f.l,p=>{ it.fotos[f.k]=p; },!f.obr));
+  it.extras.forEach((x,i)=>g.append(fotoSlot(it,"extra"+i,`Foto extra ${i+1}`,p=>{ it.extras[i]=p; },true)));
+  if(it.extras.length<MAX_EXTRAS) g.append(fotoSlot(it,"extra"+it.extras.length,"Foto extra (acesso, empecilho, detalhe)",p=>{ it.extras.push(p); },true));
+  fotos.append(g);
+  // fotos antes das observações
+  const obs=$("#sec-obs",main); main.insertBefore(fotos,obs);
+  barra(h("button",{type:"button",onclick:()=>{S.view="resumo";render();scrollTo(0,0);}},"Voltar"),
+        h("button",{type:"button",class:"primary",onclick:()=>{ const e=validarItem(it); if(e.length){ marcarErros(e); toast(e.length===1?"Falta 1 informação":`Faltam ${e.length} informações`); } else { S.view="resumo"; render(); scrollTo(0,0); toast(`Item ${idx+1} completo`); } }},"Concluir item"));
+}
+
+function secCroqui(it,opts={}){
+  const W0=900,H0=600, d=it.campos;
+  const st=(it.croqui&&it.croqui.tipo==="desenho"&&it.croqui.strokes)?it.croqui.strokes.slice():[];
+  let tool="pen", atual=null;
+  const bg=h("canvas",{width:W0,height:H0,class:"cq-bg","aria-hidden":"true"});
+  const fg=h("canvas",{width:W0,height:H0,class:"cq-fg","aria-label":"Área de desenho do croqui"});
+  const box=h("div",{class:"cq"},bg,fg);
+  function desenhaBase(){
+    const c=bg.getContext("2d"); c.fillStyle="#fff"; c.fillRect(0,0,W0,H0);
+    if(!d.tipologia){ c.fillStyle="#8aa0a6"; c.font="500 28px sans-serif"; c.textAlign="center"; c.fillText("Escolha a tipologia para ter o desenho de base",W0/2,H0/2); return; }
+    const L=+d.largura||1500, A=+d.altura||1200, ar=Math.max(.3,Math.min(3.5,L/A));
+    let bw=W0*.72, bh=bw/ar; if(bh>H0*.72){ bh=H0*.72; bw=bh*ar; }
+    const t=document.createElement("canvas"); t.width=Math.round(bw); t.height=Math.round(bh);
+    drawTipo(t,d.tipologia,{ink:"#9db2b8",glass:"#eef6f8"});
+    c.drawImage(t,(W0-bw)/2,(H0-bh)/2);
+  }
+  function desenhaTracos(){
+    const c=fg.getContext("2d"); c.clearRect(0,0,W0,H0); c.lineCap="round"; c.lineJoin="round";
+    for(const s of st){
+      if(s.tool==="text"){ c.globalCompositeOperation="source-over"; c.fillStyle="#c0261b"; c.font="600 30px sans-serif"; c.textAlign="center"; c.textBaseline="middle"; c.fillText(s.t,s.x,s.y); continue; }
+      c.globalCompositeOperation=s.tool==="eraser"?"destination-out":"source-over";
+      c.strokeStyle="#10202a"; c.lineWidth=s.tool==="eraser"?30:4;
+      c.beginPath(); s.pts.forEach(([x,y],i)=>i?c.lineTo(x,y):c.moveTo(x,y)); if(s.pts.length===1) c.lineTo(s.pts[0][0]+.1,s.pts[0][1]); c.stroke();
+    }
+    c.globalCompositeOperation="source-over";
+  }
+  function guardar(){
+    if(!st.length){ if(it.croqui&&it.croqui.tipo==="desenho") it.croqui=null; mexeu(); return; }
+    const o=document.createElement("canvas"); o.width=W0; o.height=H0; const c=o.getContext("2d"); c.drawImage(bg,0,0); c.drawImage(fg,0,0);
+    it.croqui={tipo:"desenho",data:o.toDataURL("image/png"),w:W0,h:H0,ts:new Date().toISOString(),por:S.user.nome,strokes:st.slice()};
+    mexeu();
+  }
+  const pt=e=>{ const r=fg.getBoundingClientRect(); return [Math.round((e.clientX-r.left)*W0/r.width),Math.round((e.clientY-r.top)*H0/r.height)]; };
+  fg.addEventListener("pointerdown",e=>{
+    e.preventDefault(); const p=pt(e);
+    if(tool==="text") return abrirTexto(p,e);
+    fg.setPointerCapture(e.pointerId); atual={tool,pts:[p]}; st.push(atual); desenhaTracos();
+  });
+  fg.addEventListener("pointermove",e=>{ if(!atual) return; atual.pts.push(pt(e)); desenhaTracos(); });
+  const fim=()=>{ if(!atual) return; atual=null; guardar(); };
+  fg.addEventListener("pointerup",fim); fg.addEventListener("pointercancel",fim);
+  let caixaTxt=null;
+  function abrirTexto([x,y]){
+    if(caixaTxt) caixaTxt.remove();
+    const inp=h("input",{type:"text",inputmode:"text",placeholder:"Ex.: 1025",maxlength:"30","aria-label":"Texto da cota"});
+    const ok=()=>{ const v=inp.value.trim(); if(v){ st.push({tool:"text",x,y,t:v}); desenhaTracos(); guardar(); } caixaTxt.remove(); caixaTxt=null; };
+    caixaTxt=h("div",{class:"cq-txt",style:`left:${Math.min(70,Math.max(0,x/W0*100-15))}%;top:${Math.min(80,y/H0*100)}%`},inp,
+      h("button",{type:"button",class:"primary",onclick:ok},"OK"),h("button",{type:"button",onclick:()=>{caixaTxt.remove();caixaTxt=null;}},"×"));
+    inp.addEventListener("keydown",ev=>{ if(ev.key==="Enter"){ ev.preventDefault(); ok(); } });
+    box.append(caixaTxt); setTimeout(()=>inp.focus(),30);
+  }
+  const ferr=[["pen","Caneta"],["eraser","Borracha"],["text","Texto / cota"]].map(([k,l])=>{
+    const b=h("button",{type:"button","aria-pressed":String(tool===k)},l);
+    b.addEventListener("click",()=>{ tool=k; ferr.forEach(x=>x.setAttribute("aria-pressed",String(x===b))); fg.style.cursor=k==="text"?"text":"crosshair"; });
+    return b; });
+  const limparConf=h("div",{class:"inline-confirm",hidden:true},"Apagar todo o croqui?",
+    h("button",{type:"button",class:"danger",onclick:()=>{ st.length=0; it.croqui=null; mexeu(); limparConf.hidden=true; desenhaTracos(); }},"Apagar"),
+    h("button",{type:"button",onclick:()=>{limparConf.hidden=true;}},"Cancelar"));
+  const inp=h("input",{type:"file",accept:"image/*",capture:"environment",id:"cam-croqui",style:"position:absolute;opacity:0;width:1px;height:1px"});
+  inp.addEventListener("change",async()=>{ const f=inp.files&&inp.files[0]; if(!f) return; try{ const p=await processarFoto(f,"Croqui"); it.croqui={tipo:"foto",...p}; mexeu(); render(); toast("Foto do croqui salva"); }catch(e){ toast("Não consegui abrir essa imagem. Tente outra vez."); } });
+  const sec=h("section",{class:"sec",id:"sec-croqui"},h("h3",{},opts.titulo||"Croqui da janela vendida"),
+    h("div",{class:"small muted"},opts.nota||"Opcional. Desenhe com o dedo por cima do desenho da tipologia: medidas de cada folha, lado da fechadura, fixos, bandeiras. Use \"Texto / cota\" e toque onde quer escrever."));
+  if(it.croqui&&it.croqui.tipo==="foto"){
+    sec.append(h("img",{src:it.croqui.data,alt:"Foto do croqui",style:"border-radius:8px;border:1px solid var(--line)"}),
+      h("div",{class:"row"},h("button",{type:"button",onclick:()=>{ it.croqui=null; mexeu(); render(); }},"Trocar a foto por desenho no app")));
+  } else {
+    sec.append(h("div",{class:"seg cq-tools"},ferr,
+      h("button",{type:"button",onclick:()=>{ st.pop(); desenhaTracos(); guardar(); }},"Desfazer"),
+      h("button",{type:"button",class:"danger",onclick:()=>{limparConf.hidden=false;}},"Limpar")),limparConf,box,
+      h("div",{class:"row"},h("label",{class:"btn",for:"cam-croqui",style:"position:relative"},"Ou fotografar um croqui em papel",inp)));
+  }
+  desenhaBase(); desenhaTracos();
+  sec.atualizarBase=()=>{ desenhaBase(); if(st.length) guardar(); };
+  return sec;
+}
+
+/* ---------- fluxo: lista, remedição, comparação ---------- */
+const STATUS={rascunho:["Rascunho","neutral"],aguardando:["Aguardando remedição","warn"],em_remedicao:["Em remedição","info"],pendencias:["Remedição com pendências","warn"],divergencia:["Divergência a validar","bad"],liberada:["Liberada para projeto","ok"]};
+function chipStatus(s){ const [l,c]=STATUS[s]||[s,"neutral"]; return h("span",{class:"chip dot "+c},l); }
+const PERFIL_NOME={vendedor:"Vendedor",remedidor:"Remedidor",auditoria:"Auditoria"};
+const F=k=>ITEM.flatMap(s=>s.campos).find(f=>f.k===k);
+const CMP_CAMPOS=["tipologia","linha","vidro","cor","pintExt","ralExt","fixacao","posicao","portaGiro","sentido","persiana","acion"];
+const REMED=[
+ {id:"rconf",titulo:"Confirme o produto",campos:["tipologia","tipoOutra","linha","vidro","corTipo","corRal","corAnod","corBrilho","cor","pintExt","ralExt","fixacao","posicao","portaGiro","tipoGiro","sentido","persiana","acion","volt","ponto"].map(F)},
+ {id:"rmed",titulo:"Medidas (sem ver as do vendedor)",campos:["largura","altura","acrescimo","folgaL","folgaA","calco","afastar"].map(F)},
+ {id:"rvao",titulo:"Características do vão",campos:["materialVao","contramarco","refilar","tipoContramarco"].map(F)},
+ {id:"rrem",titulo:"Remoção e empecilhos",campos:["remocao","remTipo","remParcial","remResp","afastPeca","requadro","matRemovido","rodape","rodapeResp","empecilho","empecilhoQual"].map(F)},
+ {id:"robs",titulo:"Observações do remedidor",campos:[{k:"obsRemed",l:"Observações técnicas",t:"area",opt:true,ph:"O que o projeto precisa saber"}]},
+];
+const ASCEGAS=["largura","altura","acrescimo","folgaL","folgaA"];
+const clone=v=>Array.isArray(v)?v.slice():v;
+function hist(o,txt){ o.historico.push({em:new Date().toISOString(),por:S.user.nome,txt}); }
+const distribui=u=>!!(u&&(USUARIOS.find(x=>x.nome===u.nome)||{}).distribui);
+function minhasOS(){ const u=S.user; if(u.perfil==="auditoria") return LISTA; if(u.perfil==="remedidor") return LISTA.filter(o=>o.remedidor===u.nome||(distribui(u)&&o.remedidor&&o.status==="em_remedicao")); return LISTA.filter(o=>o.vendedor===u.nome); }
+function abrirOS(o){ OS=o; S.editItem=null; const p=S.user.perfil;
+  S.view = p==="vendedor"&&o.status==="rascunho" ? "resumo" : p==="remedidor"&&(o.status==="em_remedicao"||o.status==="pendencias") ? "remedicao" : "os";
+  render(); scrollTo(0,0); }
+function irLista(){ S.view="lista"; OS=null; render(); scrollTo(0,0); }
+function novaOS(){ const o={id:Math.random().toString(36).slice(2,10),status:"rascunho",vendedor:S.user.nome,pedido:{},itens:[],aceite:{nome:"",assinatura:null},criadaEm:{por:S.user.nome,em:new Date().toISOString()},atualizadaEm:new Date().toISOString(),emitida:null,exemplo:false,remedidor:null,remedicao:null,liberacao:null,comentarios:[],historico:[]};
+  LISTA.unshift(o); hist(o,"Rascunho criado"); return o; }
+
+function telaLista(main){
+  const u=S.user;
+  if(PREVIEW) main.append(h("div",{class:"note"},"Pré-visualização: aqui o celular não libera a localização, então o GPS aparece como indisponível. Na versão hospedada ele é obrigatório."));
+  main.append(h("h1",{},u.perfil==="remedidor"?"Minhas remedições":u.perfil==="auditoria"?"Todas as OS":"Minhas OS"));
+  if(u.perfil==="vendedor") main.append(h("div",{class:"row"},
+    h("button",{type:"button",class:"primary",onclick:()=>{ OS=novaOS(); S.view="anexar"; render(); scrollTo(0,0); }},"+ Nova OS"),
+    h("button",{type:"button",onclick:()=>{ OS=novaOS(); preencherExemplo(); }},"Criar OS de exemplo")));
+  const l=minhasOS().slice().sort((a,b)=>(b.atualizadaEm||"").localeCompare(a.atualizadaEm||""));
+  if(u.perfil==="auditoria"){ const cont={}; LISTA.forEach(o=>cont[o.status]=(cont[o.status]||0)+1);
+    main.append(h("div",{class:"row"},Object.keys(STATUS).filter(s=>cont[s]).map(s=>h("span",{class:"chip "+STATUS[s][1]},`${STATUS[s][0]}: ${cont[s]}`)))); }
+  if(!l.length) main.append(h("section",{class:"card"},h("div",{class:"muted"},
+    u.perfil==="remedidor"?(distribui(u)?"Nenhuma OS de remedição (rosa) no momento. Todas chegam para você, e você pode passar as que quiser para outro remedidor.":"Nenhuma OS passada para você ainda. As OS de remedição (rosa) chegam para o Remedidor 1, que distribui."):u.perfil==="auditoria"?"Nenhuma OS emitida ainda.":"Você ainda não tem OS. Toque em + Nova OS.")));
+  if(u.perfil==="remedidor"){ const pend=l.filter(o=>o.status==="pendencias");
+    if(pend.length) main.append(h("section",{class:"card warnbox"},h("h2",{},"A confirmar"),
+      pend.map(o=>h("div",{class:"row"},h("div",{style:"flex:1;min-width:0"},`Pedido ${o.pedido.numPedido} · ${o.pedido.nome}`,h("div",{class:"small muted"},`${(o.avisos||[]).filter(a=>a.estado==="aberto").length} aviso(s) sem resposta`)),h("button",{type:"button",class:"primary",onclick:()=>abrirOS(o)},"Responder"))))); }
+  for(const o of l){
+    const P=o.pedido;
+    const card=h("section",{class:"card"},
+      h("div",{class:"row"},h("h2",{},`Pedido ${P.numPedido||"sem número"}`),h("div",{class:"sp"}),chipStatus(o.status)),
+      h("div",{class:"small muted"},[P.nome||"Cliente não informado",`${o.itens.length} ${o.itens.length===1?"item":"itens"}`,P.tipoOS?P.tipoOS.replace(/ \(.*\)/,""):null,u.perfil!=="vendedor"?`Vendedor: ${o.vendedor}`:null,o.remedidor?`Remedidor: ${o.remedidor}`:null].filter(Boolean).join(" · ")));
+    if(u.perfil==="auditoria"&&o.status==="aguardando") card.append(atribuirUI(o));
+    if(distribui(u)&&o.status==="em_remedicao") card.append(repassarUI(o));
+    const acoes=h("div",{class:"row"},h("button",{type:"button",class:(u.perfil==="remedidor"&&(o.status==="em_remedicao"||o.status==="pendencias"))||(u.perfil==="auditoria"&&o.status==="divergencia")||(u.perfil==="vendedor"&&o.status==="rascunho")?"primary":"",onclick:()=>abrirOS(o)},
+      u.perfil==="remedidor"&&o.status==="pendencias"?"Responder avisos":u.perfil==="remedidor"&&o.status==="em_remedicao"?"Fazer remedição":o.status==="rascunho"&&u.perfil==="vendedor"?"Continuar":"Abrir"));
+    if(u.perfil==="vendedor"&&o.status==="rascunho"){ const conf=h("div",{class:"inline-confirm",hidden:true},"Excluir este rascunho?",h("button",{type:"button",class:"danger",onclick:()=>{ LISTA.splice(LISTA.indexOf(o),1); salvar(); render(); }},"Excluir"),h("button",{type:"button",onclick:()=>{conf.hidden=true;}},"Cancelar"));
+      acoes.append(h("button",{type:"button",class:"ghost danger",onclick:()=>{conf.hidden=false;}},"Excluir")); card.append(acoes,conf); }
+    else card.append(acoes);
+    main.append(card);
+  }
+  main.append(h("div",{class:"small muted"},`Protótipo: as OS ficam guardadas só neste aparelho. Para testar o fluxo inteiro, saia e entre com outro perfil (vendedor, remedidor, auditoria). ${VERSAO}.`));
+}
+function repassarUI(o){
+  const sel=h("select",{id:"i-rep-"+o.id},USUARIOS.filter(x=>x.perfil==="remedidor").map(x=>h("option",{value:x.nome,selected:x.nome===o.remedidor?true:null},x.nome)));
+  sel.addEventListener("change",()=>{ const de=o.remedidor; o.remedidor=sel.value; hist(o,`Remedição passada de ${de} para ${sel.value} por ${S.user.nome}`); o.atualizadaEm=new Date().toISOString(); salvar(); render(); toast(`OS com ${sel.value}`); });
+  return h("div",{class:"field"},h("label",{for:"i-rep-"+o.id},"Remedidor responsável"),sel);
+}
+function atribuirUI(o){
+  const sel=h("select",{id:"i-rem-"+o.id},h("option",{value:""},"Escolha o remedidor"),USUARIOS.filter(x=>x.perfil==="remedidor").map(x=>h("option",{value:x.nome},x.nome)));
+  return h("div",{class:"field"},h("label",{for:"i-rem-"+o.id},"Atribuir remedidor"),h("div",{class:"row"},h("div",{style:"flex:1;min-width:0"},sel),
+    h("button",{type:"button",class:"primary",onclick:()=>{ if(!sel.value){ toast("Escolha o remedidor"); return; } o.remedidor=sel.value; o.status="em_remedicao"; hist(o,`Remedição atribuída a ${sel.value}`); o.atualizadaEm=new Date().toISOString(); salvar(); render(); toast(`OS atribuída a ${sel.value}`); }},"Atribuir")));
+}
+function valorTxt(d,k){ const f=F(k); if(!f){ const v=d[k]; return Array.isArray(v)?v.join(", "):(v||""); } if(f.se&&!f.se(d)) return ""; const v=d[k]; if(v==null) return ""; if(k==="tipologia") return v==="Outra"?(d.tipoOutra||"Outra"):v; return Array.isArray(v)?v.join(", "):String(v); }
+const norm=s=>String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/\s+/g,"");
+function comparar(it){
+  const v=it.campos, r=(it.remed||{}).campos||{}, rows=[];
+  for(const k of ["largura","altura"]){ const dv=Math.abs((+r[k]||0)-(+v[k]||0)); const sg=(+r[k]||0)-(+v[k]||0); rows.push({k,l:F(k).l,v:`${v[k]} mm`,r:`${r[k]} mm`,ok:dv<=50,dif:sg,nota:dv?`diferença de ${(dv/10).toLocaleString("pt-BR",{maximumFractionDigits:1})} cm`:"igual"}); }
+  for(const k of ["folgaL","folgaA"]){ const a=valorTxt(v,k), b=valorTxt(r,k); if(a||b) rows.push({k,l:F(k).l,v:a?a+" mm":"sem acréscimo",r:b?b+" mm":"sem acréscimo",ok:true,info:true}); }
+  for(const k of CMP_CAMPOS){ const a=valorTxt(v,k), b=valorTxt(r,k); if(!a&&!b) continue; rows.push({k,l:F(k).l,v:a||"-",r:b||"-",ok:norm(a)===norm(b)}); }
+  return rows;
+}
+function tabelaComparacao(o){
+  const sec=h("section",{class:"card"},h("h2",{},"Vendedor x remedidor"),h("div",{class:"small muted"},"Medidas: até 5 cm de diferença é normal. Produto, cor, linha, vidro e instalação: qualquer diferença aparece em vermelho."));
+  o.itens.forEach((it,i)=>{
+    const rows=comparar(it); const nBad=rows.filter(r=>!r.ok).length;
+    sec.append(h("div",{class:"row",style:"margin-top:6px"},h("h3",{},`Item ${i+1} · ${it.campos.ambiente}`),h("div",{class:"sp"}),nBad?h("span",{class:"chip bad dot"},`${nBad} divergência${nBad>1?"s":""}`):h("span",{class:"chip ok dot"},"Confere")));
+    const tb=h("tbody",{}); rows.forEach(r=>{ const av=(o.avisos||[]).find(a=>a.id===it.id+":"+r.k);
+      tb.append(h("tr",{class:r.ok?"":"bad"},h("th",{scope:"row"},r.l),h("td",{},r.v),h("td",{},r.r,r.nota?h("div",{class:"small"},r.nota):null,av&&av.estado==="confirmado"?h("div",{class:"small"},`Confirmado: "${av.comentario}"`):null))); });
+    sec.append(h("div",{class:"tbl"},h("table",{class:"cmp"},h("thead",{},h("tr",{},h("th",{},"Campo"),h("th",{},"Vendedor"),h("th",{},"Remedidor"))),tb)));
+    const cv=it.croqui, cr=it.remed&&it.remed.croqui;
+    if(cv||cr) sec.append(h("div",{class:"cq-par"},
+      h("figure",{},cv?h("img",{src:cv.data,alt:"Croqui do vendedor"}):h("div",{class:"muted small"},"Sem croqui"),h("figcaption",{},"Croqui do vendedor")),
+      h("figure",{},cr?h("img",{src:cr.data,alt:"Croqui do remedidor"}):h("div",{class:"muted small"},"Sem croqui"),h("figcaption",{},"Croqui do remedidor"))));
+    if(it.remed&&it.remed.campos.obsRemed) sec.append(h("div",{class:"small"},h("b",{},"Obs. do remedidor: "),it.remed.campos.obsRemed));
+  });
+  return sec;
+}
+function telaOS(main){
+  const o=OS, P=o.pedido, p=S.user.perfil;
+  main.append(h("section",{class:"card"},
+    h("div",{class:"row"},h("h1",{},`Pedido ${P.numPedido}`),h("div",{class:"sp"}),chipStatus(o.status)),
+    h("div",{},P.nome),
+    h("div",{class:"small muted"},[`${o.itens.length} ${o.itens.length===1?"item":"itens"}`,P.tipoOS,`Vendedor: ${o.vendedor}`,o.remedidor?`Remedidor: ${o.remedidor}`:null].filter(Boolean).join(" · ")),
+    o.status==="aguardando"&&p!=="auditoria"?h("div",{class:"note"},"Aguardando o responsável técnico atribuir um remedidor."):null,
+    o.status==="em_remedicao"&&p!=="remedidor"?h("div",{class:"note"},`Em remedição com ${o.remedidor}.`):null,
+    o.status==="pendencias"&&p!=="remedidor"?h("div",{class:"note"},`${o.remedidor} finalizou a remedição e ainda está respondendo avisos de diferença.`):null,
+    o.status==="liberada"&&o.remedicao?h("div",{class:"note"},"Liberada para projeto. Valem os dados do remedidor; os do vendedor ficam no histórico."):null,
+    p==="auditoria"&&o.status==="aguardando"?atribuirUI(o):null,
+    p==="remedidor"&&(o.status==="em_remedicao"||o.status==="pendencias")?h("button",{type:"button",class:"primary",onclick:()=>{S.view="remedicao";render();scrollTo(0,0);}},"Fazer remedição"):null));
+  if(o.remedicao) main.append(tabelaComparacao(o));
+  if(o.status==="divergencia"||o.comentarios.length) main.append(comentariosUI(o));
+  if(p==="auditoria"&&o.status==="divergencia"){
+    const conf=h("div",{class:"inline-confirm",hidden:true},"Liberar com os dados do remedidor?",h("button",{type:"button",class:"primary",onclick:()=>{ aplicarFinal(o,`Divergência validada por ${S.user.nome}`); salvar(); render(); toast("OS liberada para projeto"); }},"Liberar"),h("button",{type:"button",onclick:()=>{conf.hidden=true;}},"Cancelar"));
+    main.append(h("section",{class:"card"},h("h2",{},"Validar divergência"),h("div",{class:"small muted"},"Ao liberar, os dados do remedidor substituem os do vendedor na OS que vai para projeto."),
+      h("button",{type:"button",class:"primary",onclick:()=>{conf.hidden=false;}},"Validar e liberar para projeto"),conf));
+  }
+  if(p!=="remedidor"){
+    const b=h("button",{type:"button",class:"wide"+(o.status==="liberada"?" primary":"")},o.status==="liberada"?"Baixar OS para projeto (PDF)":"Baixar OS do vendedor (PDF)");
+    b.addEventListener("click",()=>baixarPDF(b));
+    main.append(h("section",{class:"card"},h("h2",{},"PDF da OS"),b));
+  }
+  main.append(h("section",{class:"card"},h("h2",{},"Histórico"),h("ul",{class:"hist"},o.historico.slice().reverse().map(x=>h("li",{},h("span",{class:"small muted"},`${fmtDT(x.em)} · ${x.por}`),h("div",{},x.txt))))));
+  barra(h("button",{type:"button",onclick:irLista},"Voltar para a lista"));
+}
+function comentariosUI(o){
+  const ta=h("textarea",{id:"i-coment",placeholder:"Explique a divergência ou responda"});
+  return h("section",{class:"card"},h("h2",{},"Conversa sobre a divergência"),
+    h("ul",{class:"hist"},o.comentarios.map(c=>h("li",{},h("span",{class:"small muted"},`${c.por} (${PERFIL_NOME[c.perfil]}) · ${fmtDT(c.em)}`),h("div",{},c.texto)))),
+    o.status==="divergencia"?h("div",{class:"field"},h("label",{for:"i-coment"},"Comentário"),ta,
+      h("button",{type:"button",onclick:()=>{ const t=ta.value.trim(); if(!t) return; o.comentarios.push({por:S.user.nome,perfil:S.user.perfil,em:new Date().toISOString(),texto:t}); o.atualizadaEm=new Date().toISOString(); salvar(); render(); }},"Enviar comentário")):null);
+}
+function iniciarRemed(it){
+  if(it.remed) return it.remed;
+  const c={}; for(const sec of REMED) for(const f of sec.campos) if(!ASCEGAS.includes(f.k)&&it.campos[f.k]!=null) c[f.k]=clone(it.campos[f.k]);
+  c.respMed=S.user.nome;
+  const trav=Object.keys(c).filter(k=>k!=="respMed"&&k!=="cor"&&c[k]!==""&&!(Array.isArray(c[k])&&!c[k].length));
+  it.remed={campos:c,travados:trav,conferidos:[],fotos:{},extras:[],croqui:it.croqui&&it.croqui.tipo==="desenho"?{...it.croqui,strokes:(it.croqui.strokes||[]).slice()}:null};
+  return it.remed;
+}
+function validarRemed(r){
+  const e=[...validar(REMED,r.campos),...pendConferir(REMED,r.campos,r.travados,r.conferidos)];
+  if(r.campos.fixacao==="Sobreposta"&&r.campos.acrescimo==="Não") e.unshift({k:"acrescimo",l:"Acréscimo",m:"Peça sobreposta tem acréscimo obrigatório"});
+  for(const f of FOTOS) if(f.obr&&!r.fotos[f.k]) e.push({k:"foto-"+f.k,l:"Foto: "+f.l,m:"Tire esta foto"});
+  return e;
+}
+function telaRemedicao(main){
+  const o=OS, P=o.pedido;
+  main.append(h("h1",{},`Remedição · Pedido ${P.numPedido}`));
+  const lin=(l,v)=>h("div",{},h("b",{},l+": "),v||"-");
+  main.append(h("section",{class:"card"},h("h2",{},"Obra"),
+    lin("Cliente",P.nome),lin("Falar com",P.contato),lin("Local de instalação",`${P.endereco}, ${P.bairro}, ${P.cidade} - ${P.uf}, CEP ${P.cep}`),lin("Ponto de referência",P.referencia),lin("Prazo",`${P.prazo} dias úteis`),
+    h("div",{class:"small muted"},PEDIDO[2].campos.map(f=>`${f.l}: ${valorTxt(P,f.k)||"-"}`).join(" · "))));
+  if(o.status==="pendencias") main.append(avisosUI(o));
+  else main.append(h("div",{class:"note"},"Suas medidas são comparadas com as do vendedor só quando você finalizar. Até lá elas ficam ocultas para que a conferência seja às cegas."));
+  const lista=h("section",{class:"card"},h("h2",{},`Itens (${o.itens.length})`)); const cor=corTinta();
+  o.itens.forEach((it,i)=>{ const r=iniciarRemed(it); const e=validarRemed(r);
+    lista.append(h("div",{class:"item"},tipoCanvas(r.campos.tipologia||it.campos.tipologia||"Outra",128,96,cor),h("div",{class:"info"},
+      h("div",{class:"t"},`Item ${i+1} · ${it.campos.ambiente}`),h("div",{class:"d"},tipoTxt(r.campos)),
+      h("div",{class:"row",style:"margin-top:6px"},statusChip(e.length),h("span",{class:"small muted"},`Fotos ${FOTOS.filter(f=>r.fotos[f.k]).length}`)),
+      h("div",{class:"row",style:"margin-top:8px"},h("button",{type:"button",class:e.length?"primary":"",onclick:()=>{S.editItem=it.id;S.view="ritem";render();scrollTo(0,0);}},e.length?"Remedir":"Revisar"))))); });
+  main.append(lista);
+  const pend=o.itens.reduce((n,it)=>n+validarRemed(iniciarRemed(it)).length,0);
+  const env=h("button",{type:"button",class:"primary wide",disabled:pend?true:null},o.status==="pendencias"?"Finalizar de novo":"Finalizar remedição");
+  env.addEventListener("click",()=>enviarRemedicao(env));
+  main.append(h("section",{class:"card"},h("h2",{},"Finalizar"),h("div",{class:"small muted"},pend?`Faltam ${pend} informações nos itens.`:"Tudo preenchido. Ao finalizar, o app compara com o vendedor e mostra cada diferença como aviso."),env,
+    h("button",{type:"button",class:"ghost",onclick:exemploRemedicao},"Preencher com exemplo de remedição")));
+  barra(h("button",{type:"button",onclick:irLista},"Voltar para a lista"));
+}
+function telaRItem(main){
+  const o=OS, idx=o.itens.findIndex(i=>i.id===S.editItem); if(idx<0){ S.view="remedicao"; return render(); }
+  const it=o.itens[idx], r=iniciarRemed(it), v=it.campos;
+  main.append(h("h1",{},`Remedição · Item ${idx+1} de ${o.itens.length}`));
+  main.append(h("section",{class:"card"},h("h2",{},"Do vendedor"),
+    h("div",{},h("b",{},"Ambiente: "),v.ambiente),h("div",{},h("b",{},"Desenho visto pelo lado: "),v.vista),
+    h("div",{},h("b",{},"Obs. cliente: "),v.obsCliente),h("div",{},h("b",{},"Obs. Atenua: "),v.obsAtenua),
+    it.croqui&&it.croqui.tipo==="foto"?h("figure",{style:"margin:0"},h("img",{src:it.croqui.data,alt:"Foto do croqui do vendedor",style:"border-radius:8px"}),h("figcaption",{class:"small muted"},"Croqui do vendedor (foto)")):null));
+  const cq=secCroqui(r,{titulo:"Croqui do remedidor",nota:it.croqui&&it.croqui.tipo==="desenho"?"Começa com o croqui do vendedor. Corrija por cima: este é o croqui que vale para o projeto.":"Desenhe o croqui por cima da tipologia. Este é o croqui que vale para o projeto."});
+  renderSchema(REMED,r.campos,main,{trav:r.travados||null,conf:r.conferidos||(r.conferidos=[]),origem:"da OS",onChange:f=>{ if(["tipologia","largura","altura"].includes(f.k)) cq.atualizarBase(); if(f.k==="fixacao"&&r.campos.fixacao==="Sobreposta"&&r.campos.acrescimo!=="Sim"){ r.campos.acrescimo="Sim"; const sy=scrollY; render(); scrollTo(0,sy); toast("Sobreposta: marquei que tem acréscimo. Informe quanto em Medidas."); } }});
+  main.insertBefore(cq,$("#sec-rmed",main));
+  const fotos=h("section",{class:"sec",id:"sec-fotos"},h("h3",{},"Fotos com trena"));
+  const g=h("div",{class:"shots"});
+  for(const f of FOTOS) g.append(fotoSlot(r,f.k,f.l,p=>{ r.fotos[f.k]=p; },!f.obr));
+  r.extras.forEach((x,i)=>g.append(fotoSlot(r,"extra"+i,`Foto extra ${i+1}`,p=>{ r.extras[i]=p; },true)));
+  if(r.extras.length<MAX_EXTRAS) g.append(fotoSlot(r,"extra"+r.extras.length,"Foto extra",p=>{ r.extras.push(p); },true));
+  fotos.append(g); main.insertBefore(fotos,$("#sec-robs",main));
+  barra(h("button",{type:"button",onclick:()=>{S.view="remedicao";render();scrollTo(0,0);}},"Voltar"),
+    h("button",{type:"button",class:"primary",onclick:()=>{ const e=validarRemed(r); if(e.length){ marcarErros(e); toast(e.length===1?"Falta 1 informação":`Faltam ${e.length} informações`); } else { if(o.status==="pendencias"){ gerarAvisos(o); resolver(o); salvar(); } S.view=o.status==="pendencias"||o.status==="em_remedicao"?"remedicao":"os"; render(); scrollTo(0,0); toast(`Item ${idx+1} salvo`); } }},"Concluir item"));
+}
+async function enviarRemedicao(btn){
+  const o=OS;
+  btn.disabled=true; btn.textContent="Obtendo localização…";
+  const gps=await getPos(10000);
+  if(EXIGE_GPS&&gps.lat==null){ btn.disabled=false; btn.textContent="Finalizar remedição"; toast(`${gps.erro}. Ative a localização do celular para finalizar.`); return; }
+  const agora=new Date().toISOString();
+  o.remedicao={por:S.user.nome,em:agora,gps:gps.lat!=null?gps:null,gpsErro:gps.erro||null};
+  o.itens.forEach(it=>{ it.remed.campos.dataMed=agora.slice(0,10); it.remed.campos.respMed=S.user.nome; });
+  gerarAvisos(o);
+  const n=o.avisos.length;
+  hist(o,`Remedição finalizada (${n?n+" aviso"+(n>1?"s":"")+" de diferença":"sem diferenças"})`);
+  if(!n) aplicarFinal(o,"Liberada automaticamente: remedição sem diferenças");
+  else { o.status="pendencias"; resolver(o); }
+  o.atualizadaEm=agora; salvar(); S.view=o.status==="pendencias"?"remedicao":"os"; render(); scrollTo(0,0);
+  toast(n?`${n} aviso${n>1?"s":""} de diferença para você responder`:"Sem diferenças: OS liberada para projeto");
+}
+function gerarAvisos(o){
+  const novos=[];
+  o.itens.forEach((it,i)=>comparar(it).filter(r=>!r.ok).forEach(r=>{
+    const id=it.id+":"+r.k; const ant=(o.avisos||[]).find(a=>a.id===id&&a.r===r.r&&a.v===r.v);
+    novos.push(ant||{id,item:it.id,idx:i,k:r.k,l:r.l,v:r.v,r:r.r,dif:r.dif,estado:"aberto",comentario:""});
+  }));
+  o.avisos=novos;
+}
+function avisoTxt(a){
+  if(a.k==="largura"||a.k==="altura"){ const cm=(a.dif/10).toLocaleString("pt-BR",{maximumFractionDigits:1}); return `O vendedor mediu ${a.v} de ${a.l.replace(" final","").toLowerCase()}, você mediu ${a.r} (${a.dif>0?"+":""}${cm} cm). Está correto?`; }
+  return `O vendedor colocou ${a.l.toLowerCase()} "${a.v}", você colocou "${a.r}". Está correto?`;
+}
+function resolver(o){
+  if(o.status!=="pendencias") return;
+  if(o.avisos.some(a=>a.estado==="aberto")) return;
+  if(o.avisos.some(a=>a.estado==="confirmado")){ o.status="divergencia"; hist(o,"Avisos respondidos: diferenças confirmadas vão para a Auditoria"); }
+  else aplicarFinal(o,"Diferenças corrigidas pelo remedidor: liberada para projeto");
+}
+function avisosUI(o){
+  const abertos=o.avisos.filter(a=>a.estado==="aberto"), resp=o.avisos.filter(a=>a.estado!=="aberto");
+  const sec=h("section",{class:"card warnbox",id:"avisos"},h("h2",{},`A confirmar (${abertos.length})`),
+    h("div",{class:"small muted"},"Corrija o que foi engano seu. Se o seu valor está certo, confirme e explique. Pode deixar para depois: a OS fica salva com pendências."));
+  abertos.forEach(a=>{
+    const ta=h("textarea",{placeholder:"Por que o seu valor está correto?","aria-label":"Comentário da confirmação"});
+    const conf=h("div",{class:"field",hidden:true},ta,h("button",{type:"button",class:"primary",onclick:()=>{ const t=ta.value.trim(); if(!t){ toast("Para confirmar, escreva um comentário"); ta.focus(); return; }
+      a.estado="confirmado"; a.comentario=t; a.por=S.user.nome; a.em=new Date().toISOString(); hist(o,`Confirmou ${a.l.toLowerCase()} no item ${a.idx+1}: ${t}`); resolver(o); o.atualizadaEm=a.em; salvar(); if(o.status!=="pendencias"){ S.view="os"; } render(); }},"Salvar confirmação"));
+    sec.append(h("div",{class:"aviso"},h("div",{class:"small muted"},`Item ${a.idx+1} · ${o.itens[a.idx].campos.ambiente}`),h("div",{class:"t"},avisoTxt(a)),
+      h("div",{class:"row"},
+        h("button",{type:"button",onclick:()=>{ const ri=(OS.itens.find(i=>i.id===a.item)||{}).remed; if(ri&&ri.travados){ const j=ri.travados.indexOf(a.k); if(j>=0) ri.travados.splice(j,1); } S.editItem=a.item; S.view="ritem"; render(); setTimeout(()=>marcarErros([{k:a.k,m:`Vendedor: ${a.v}. Corrija se foi engano.`}]),60); }},"Corrigir"),
+        h("button",{type:"button",onclick:()=>{ conf.hidden=!conf.hidden; if(!conf.hidden) ta.focus(); }},"Confirmar"),
+        h("button",{type:"button",class:"ghost",onclick:()=>toast("Fica na sua lista A confirmar")},"Deixar para depois")),conf));
+  });
+  if(resp.length) sec.append(h("div",{class:"small muted"},`Já respondidos: ${resp.map(a=>`item ${a.idx+1} ${a.l.toLowerCase()}`).join(", ")}`));
+  return sec;
+}
+function aplicarFinal(o,motivo){
+  o.itens.forEach(it=>{ if(!it.remed) return; it.final={campos:{...it.campos,...it.remed.campos},fotos:it.remed.fotos,extras:it.remed.extras,croqui:it.remed.croqui||it.croqui}; });
+  o.status="liberada"; o.liberacao={por:S.user.nome,em:new Date().toISOString(),motivo}; hist(o,motivo); o.atualizadaEm=o.liberacao.em;
+}
+async function baixarPDF(btn){
+  const t=btn.textContent; btn.disabled=true; btn.textContent="Montando o PDF…"; await new Promise(r=>setTimeout(r,30));
+  try{ const doc=montarPDF(OS.emitida); const nome=`OS ${OS.pedido.numPedido} - ${OS.pedido.nome}${OS.status==="liberada"&&OS.remedicao?" - projeto":""}`.replace(/[\\/:*?"<>|]/g,"").slice(0,120)+".pdf";
+    const r=await salvarArquivo(doc.output("blob"),nome); toast(r==="declined"?"Download cancelado":`PDF gerado: ${nome}`); }
+  catch(e){ console.error(e); toast("Não consegui montar o PDF. Tente de novo."); }
+  btn.disabled=false; btn.textContent=t;
+}
+function exemploRemedicao(){
+  const o=OS;
+  o.itens.forEach((it,i)=>{ const r=iniciarRemed(it); const v=it.campos;
+    Object.assign(r.campos,{largura:String(+v.largura+(i===0?10:80)),altura:String(+v.altura-(i===0?5:0)),acrescimo:v.acrescimo||"Sim",folgaL:v.folgaL||"90",folgaA:v.folgaA||"90"});
+    if(i===1){ r.campos.vidro="10 mm laminado incolor"; r.travados=(r.travados||[]).filter(k=>k!=="vidro"); }
+    r.conferidos=[...(r.travados||[])];
+    r.fotos={frente:fotoExemplo("Vão inteiro, de frente"),largura:fotoExemplo("Trena na largura","h"),altura:fotoExemplo("Trena na altura","v"),piso:fotoExemplo("Piso / soleira do vão","p")};
+    if(r.croqui&&r.croqui.strokes){ r.croqui.strokes.push({tool:"text",x:450,y:330,t:"conferido na obra"}); const sc=secCroqui(r); sc.atualizarBase(); }
+  });
+  salvar(); render(); toast("Exemplo: item 2 com 8 cm a mais na largura e vidro diferente");
+}
+
+/* ---------- pedido de venda: anexar, montar a OS, conferir ---------- */
+const TRAVA_ITEM=["tipologia","largura","altura","acrescimo","folgaL","folgaA","calco","linha","vidro","corTipo","corRal","corAnod","corBrilho","posFolhas","fecho","fechoOutro","persiana","acion","fixacao"];
+function fmtCampo(f,d){ const v=d[f.k]; if(v==null||v===""||(Array.isArray(v)&&!v.length)) return ""; if(f.t==="date") return fmtD(v); if(Array.isArray(v)) return v.join(", "); return f.u?`${v} ${f.u}`:String(v); }
+function aplicarPedidoVenda(p,arquivo){
+  const r=ConferenciaPedido.preencherOS(p);
+  OS.pedido={}; OS.travados=[];
+  for(const [k,v] of Object.entries(r.pedido)) if(v!==""&&v!=null){ OS.pedido[k]=v; OS.travados.push(k); }
+  OS.itens=r.itens.map(x=>{ const it=novoItem(); it.origem=x.origem; it.travados=[];
+    const cp=x.campos.cor?corPartes(x.campos.cor):{}; const campos={...x.campos,...cp,...fechoDe(x.campos.concha)}; if(cp.corTipo) campos.cor=corTxt(campos);
+    for(const [k,v] of Object.entries(campos)) if(v!==""&&v!=null){ it.campos[k]=v; if(TRAVA_ITEM.includes(k)&&!(k==="tipologia"&&v==="Outra")) it.travados.push(k); }
+    return it; });
+  OS.pedidoVenda={arquivo,lidoEm:new Date().toISOString(),por:S.user.nome,dados:p};
+  hist(OS,`Pedido de venda ${p.numero} anexado (${arquivo})`);
+}
+function telaAnexar(main){
+  main.append(h("h1",{},"Nova OS"));
+  const st=h("div",{class:"small muted",role:"status"},"O app lê o PDF do pedido e já monta a OS: cliente, endereço de entrega, prazo e cada peça com linha, vidro, cor, medidas e instalação. Você completa só o que o pedido não traz.");
+  const inp=h("input",{type:"file",accept:"application/pdf,.pdf",id:"i-pedido",style:"position:absolute;opacity:0;width:1px;height:1px"});
+  const lab=h("label",{class:"btn primary",for:"i-pedido",style:"position:relative;text-align:center"},"Anexar PDF do pedido de venda",inp);
+  const err=h("div",{class:"err"});
+  inp.addEventListener("change",async()=>{
+    const f=inp.files&&inp.files[0]; if(!f) return; err.textContent=""; st.textContent="Lendo o pedido…";
+    try{
+      if(!window.pdfjsLib) throw new Error("O leitor de PDF não carregou. Verifique a internet e abra o app de novo.");
+      const pags=await ConferenciaPedido.lerTextoPDF(window.pdfjsLib,new Uint8Array(await f.arrayBuffer()));
+      const p=ConferenciaPedido.parsePedido(pags);
+      if(p.revisao) throw new Error("Este é um pedido de revisão (PPVR). Anexe o pedido original.");
+      if(!p.numero||!p.itens.length) throw new Error("Não encontrei o número do pedido ou as peças neste PDF. Confira se é o pedido de venda gerado pelo sistema.");
+      if(!OS||OS.status!=="rascunho") OS=novaOS();
+      aplicarPedidoVenda(p,f.name); mexeu(); S.view="resumo"; render(); scrollTo(0,0);
+      toast(`Pedido ${p.numero} lido: ${OS.itens.length} ${OS.itens.length===1?"peça":"peças"}`);
+    }catch(e){ console.error(e); st.textContent=""; err.textContent=e.message||"Não consegui ler este PDF."; inp.value=""; }
+  });
+  main.append(h("section",{class:"card"},h("h2",{},"Pedido de venda"),st,lab,err));
+  main.append(h("section",{class:"card"},h("div",{class:"small muted"},"Sem um pedido em mãos? Veja como fica com um pedido de exemplo."),h("button",{type:"button",onclick:preencherExemplo},"Usar pedido de exemplo")));
+  barra(h("button",{type:"button",onclick:()=>{ if(OS&&!OS.pedidoVenda&&!OS.itens.length){ LISTA.splice(LISTA.indexOf(OS),1); } irLista(); }},"Voltar para a lista"));
+}
+function trocarPdfUI(){
+  const conf=h("div",{class:"inline-confirm",hidden:true},"Descartar esta OS e anexar outro PDF? O que você já preencheu nela será perdido.",
+    h("button",{type:"button",class:"danger",onclick:()=>{ const i=LISTA.indexOf(OS); if(i>=0) LISTA.splice(i,1); OS=novaOS(); salvar(); S.view="anexar"; render(); scrollTo(0,0); toast("OS descartada. Anexe o PDF certo."); }},"Descartar e anexar outro"),
+    h("button",{type:"button",onclick:()=>{conf.hidden=true;}},"Cancelar"));
+  return h("div",{},h("button",{type:"button",class:"link",onclick:()=>{conf.hidden=false;}},"Anexei o PDF errado"),conf);
+}
+function blocoResumo(schema,d,omit=[]){
+  const out=[];
+  for(const sec of schema){
+    const linhas=sec.campos.filter(f=>f.pdf!==false&&!omit.includes(f.k)&&(!f.se||f.se(d))).map(f=>[f.l,fmtCampo(f,d)]).filter(([,v])=>v);
+    if(!linhas.length) continue;
+    out.push(h("div",{class:"rs"},h("h4",{},sec.titulo),h("dl",{},linhas.flatMap(([l,v])=>[h("dt",{},l),h("dd",{},v)]))));
+  }
+  return out;
+}
+function telaConferencia(main){
+  const o=OS, P=o.pedido;
+  main.append(h("h1",{},"Resumo para conferência"));
+  main.append(h("div",{class:"note"},"Confira tudo antes de finalizar. Para corrigir, volte ao item ou aos dados do pedido."));
+  // conferência automática com o pedido de venda
+  let res=null;
+  if(o.pedidoVenda&&window.ConferenciaPedido){ try{ res=ConferenciaPedido.conferir(o.pedidoVenda.dados,o); }catch(e){ console.error(e); } }
+  const problemas=res?res.linhas.filter(l=>l.status==="diverge"||l.status==="falta"):[];
+  // prazo contado de outro marco não trava: há vendas medidas antes de fechar o pedido
+  const avisosPrazo=res?res.bloqueios.filter(b=>/prazo/i.test(b)):[];
+  if(res) res.bloqueios=res.bloqueios.filter(b=>!/prazo/i.test(b));
+  if(res){
+    const sec=h("section",{class:"card"+(res.bloqueios.length||problemas.length||avisosPrazo.length?" warnbox":" done")},h("h2",{},`Conferência com o pedido ${res.pedido}`));
+    if(res.bloqueios.length) sec.append(h("div",{class:"err"},"Não dá para finalizar:"),h("ul",{class:"errs"},res.bloqueios.map(b=>h("li",{},b))));
+    if(avisosPrazo.length) sec.append(h("div",{class:"note"},"Atenção: ",avisosPrazo.map(b=>b.replace(/ Corrija o pedido antes de emitir a OS\.?/,"")).join(" "),h("div",{class:"small"},"Se a medição já foi feita antes da venda, pode seguir normalmente.")));
+    if(problemas.length){ sec.append(h("div",{},`${problemas.length} ${problemas.length===1?"diferença":"diferenças"} entre a OS e o pedido:`));
+      const tb=h("tbody",{}); problemas.forEach(l=>tb.append(h("tr",{class:"bad"},h("th",{scope:"row"},`${l.grupo}: ${l.campo}`),h("td",{},l.pedido),h("td",{},l.os,l.obs?h("div",{class:"small"},l.obs):null))));
+      sec.append(h("div",{class:"tbl"},h("table",{class:"cmp"},h("thead",{},h("tr",{},h("th",{},"Campo"),h("th",{},"Pedido"),h("th",{},"OS"))),tb))); }
+    if(!res.bloqueios.length&&!problemas.length&&!avisosPrazo.length) sec.append(h("div",{},`Tudo bate com o pedido (${res.resumo.ok} campos conferidos).`));
+    main.append(sec);
+  }
+  // pedido
+  const cab=h("section",{class:"card"},h("h2",{},`Pedido ${P.numPedido}`));
+  cab.append(...blocoResumo(PEDIDO,P));
+  main.append(cab);
+  // itens
+  o.itens.forEach((it,i)=>{
+    const d=it.campos;
+    const c=h("section",{class:"card"},h("h2",{},`Item ${i+1} · ${d.ambiente}`),h("div",{class:"small muted"},`${tipoTxt(d)} · ${d.largura} × ${d.altura} mm${d.acrescimo==="Sim"?` (+${d.folgaL} / +${d.folgaA})`:""}`));
+    c.append(...blocoResumo(ITEM,d,["obsCliente","obsAtenua"]));
+    const imgs=[...(it.croqui?[[it.croqui,"Croqui"]]:[]),...FOTOS.filter(f=>it.fotos[f.k]).map(f=>[it.fotos[f.k],f.l]),...it.extras.map((x,j)=>[x,`Extra ${j+1}`])];
+    c.append(h("div",{class:"thumbs"},imgs.map(([x,l])=>h("figure",{},h("img",{src:x.data,alt:l}),h("figcaption",{},l)))));
+    c.append(...blocoResumo([ITEM.find(s=>s.id==="obs")],d));
+    c.append(h("button",{type:"button",class:"ghost",onclick:()=>{S.editItem=it.id;S.view="item";render();scrollTo(0,0);}},"Corrigir este item"));
+    main.append(c);
+  });
+  // finalizar
+  const just=h("textarea",{id:"i-just",placeholder:"Explique por que a OS está diferente do pedido"}); just.value=o.justificativa||"";
+  just.addEventListener("input",()=>{ o.justificativa=just.value.trim(); salvar(); atual(); });
+  const btn=h("button",{type:"button",class:"primary wide"},"Finalizar e gerar OS (PDF)");
+  const atual=()=>{ btn.disabled=!!(res&&(res.bloqueios.length||(problemas.length&&!(o.justificativa||"").length))); };
+  btn.addEventListener("click",()=>{ o.conferencia=res?{em:new Date().toISOString(),resumo:res.resumo,diferencas:problemas,bloqueios:res.bloqueios,avisos:avisosPrazo,justificativa:o.justificativa||""}:null; emitir(btn); });
+  const fin=h("section",{class:"card"},h("h2",{},"Finalizar"));
+  if(problemas.length&&!(res&&res.bloqueios.length)) fin.append(h("div",{class:"field"},h("label",{for:"i-just"},"Justificativa das diferenças"),just));
+  fin.append(btn); atual();
+  main.append(fin);
+  barra(h("button",{type:"button",onclick:()=>{S.view="resumo";render();scrollTo(0,0);}},"Voltar"));
+}
+
+/* ---------- PDF ---------- */
+async function emitir(btn){
+  btn.disabled=true; btn.textContent="Obtendo localização…";
+  const gps=await getPos(10000);
+  if(EXIGE_GPS && gps.lat==null){ btn.disabled=false; btn.textContent="Finalizar e gerar OS (PDF)"; toast(`${gps.erro}. Ative a localização do celular para emitir a OS.`); return; }
+  btn.textContent="Montando o PDF…";
+  await new Promise(r=>setTimeout(r,30));
+  const em={por:S.user.nome,em:new Date().toISOString(),gps:gps.lat!=null?gps:null,gpsErro:gps.erro||null};
+  let doc;
+  try{ doc=montarPDF(em); }catch(e){ console.error(e); btn.disabled=false; btn.textContent="Finalizar e gerar OS (PDF)"; toast("Não consegui montar o PDF. Tente de novo."); return; }
+  const nome=`OS ${OS.pedido.numPedido} - ${OS.pedido.nome}`.replace(/[\\/:*?"<>|]/g,"").slice(0,120)+".pdf";
+  em.paginas=doc.getNumberOfPages(); em.arquivo=nome;
+  const blob=doc.output("blob");
+  const r=await salvarArquivo(blob,nome);
+  OS.emitida=em;
+  if(OS.status==="rascunho"){
+    hist(OS,"OS emitida pelo vendedor"+(OS.conferencia?(OS.conferencia.diferencas.length?` com ${OS.conferencia.diferencas.length} diferença(s) do pedido. Justificativa: ${OS.conferencia.justificativa}`:" (confere com o pedido de venda)")+((OS.conferencia.avisos||[]).length?". Aviso: prazo do pedido não conta da medição":""):""));
+    if(OS.pedido.tipoOS==="Remedição (O.S Rosa)"){ const d=USUARIOS.find(x=>x.distribui); OS.remedidor=d.nome; OS.status="em_remedicao"; hist(OS,`Remedição enviada automaticamente para ${d.nome}`); }
+    else { OS.status="liberada"; OS.liberacao={por:S.user.nome,em:em.em,motivo:"OS sem remedição: liberada para projeto"}; hist(OS,OS.liberacao.motivo); }
+  }
+  OS.atualizadaEm=em.em; salvar(); S.view="os"; render(); scrollTo(0,0);
+  toast(r==="declined"?"Download cancelado. Dá para baixar de novo nesta tela.":`PDF gerado: ${nome}`);
+}
+async function salvarArquivo(blob,nome){
+  try{ if(window.claude&&window.claude.use){ const dl=await window.claude.use("downloads"); if(dl){ await dl.save({filename:nome,data:blob}); return "ok"; } } }
+  catch(e){ if(e&&e.code==="declined") return "declined"; }
+  const a=h("a",{href:URL.createObjectURL(blob),download:nome}); document.body.append(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},2000); return "ok";
+}
+function montarPDF(em){
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({unit:"mm",format:"a4"});
+  const M=10, W=190, BOT=284, P=OS.pedido, N=OS.itens.length;
+  let y=0, ctx=null, primeira=true;
+  const txt=s=>String(s==null?"":s).replace(/[–—]/g,"-").replace(/[“”]/g,'"').replace(/[‘’]/g,"'").replace(/…/g,"...");
+  function cabecalho(){
+    y=8; doc.setLineWidth(.25); doc.setDrawColor(40); doc.setTextColor(20);
+    doc.rect(M,y,W,20); doc.line(M+50,y,M+50,y+20); doc.line(M+148,y,M+148,y+20);
+    doc.addImage(LOGO,"JPEG",M+4,y+5.2,42,9.5);
+    doc.setFont("helvetica","normal"); doc.setFontSize(17); doc.text("ORDEM DE SERVIÇO",M+99,y+12.3,{align:"center"});
+    doc.setFontSize(6.5); const r=[["Desenvolvido por:","Rafael Patetti"],["Aprovado por:","Nicole Fischer"],["Revisão:","00-05/10/23 (app)"]];
+    r.forEach(([a,b],i)=>{ doc.setFont("helvetica","bold"); doc.text(a,M+150,y+4.5+i*5.3); doc.setFont("helvetica","normal"); doc.text(b,M+150+doc.getTextWidth(a)+1.6,y+4.5+i*5.3); });
+    y+=20;
+    const cel=[["Nº Pedido:",P.numPedido],["Vendedor:",OS.vendedor],["Data do Pedido:",fmtD(P.dataPedido)],["Prazo p/ Instalação:",`${P.prazo} dias úteis`]];
+    doc.setFontSize(8); cel.forEach(([a,b],i)=>{ const x=M+i*W/4; doc.rect(x,y,W/4,6.5); doc.setFont("helvetica","bold"); doc.text(a,x+1.5,y+4.3); doc.setFont("helvetica","normal"); doc.text(txt(b),x+3.2+doc.getTextWidth(a),y+4.3); });
+    y+=6.5; doc.rect(M,y,W,6.5);
+    let tw=0; doc.setFont("helvetica","normal"); TIPOS_OS.forEach(t=>tw+=doc.getTextWidth(t)+3.4+5); let x=M+(W-tw)/2;
+    TIPOS_OS.forEach(t=>{ caixa(x,y+4.3,P.tipoOS===t); const [r,g,b]=COR_OS[t]; const m=t.match(/\((.*)\)/); const pre=t.slice(0,m.index); doc.text(pre,x+3.4,y+4.3); const xx=x+3.4+doc.getTextWidth(pre); doc.setFillColor(r,g,b); doc.rect(xx,y+1.6,doc.getTextWidth(m[0]),3.6,"F"); doc.text(m[0],xx,y+4.3); x+=3.4+doc.getTextWidth(t)+5; });
+    y+=6.5;
+    if(ctx && ctx.item!=null){
+      const it=OS.itens[ctx.item]; doc.setFillColor(13,143,161); doc.rect(M,y+2,W,7,"F"); doc.setTextColor(255); doc.setFont("helvetica","bold"); doc.setFontSize(9.5);
+      const cc=(it.final||it).campos; doc.text(txt(`ITEM ${ctx.item+1} DE ${N}   |   ${cc.ambiente}   |   ${tipoTxt(cc)}`),M+2.5,y+6.8);
+      doc.setFont("helvetica","normal"); doc.text(txt(`${ctx.titulo}  ·  página ${ctx.pagina} de 4 do item`),M+W-2.5,y+6.8,{align:"right"});
+      doc.setTextColor(20); y+=9;
+    }
+    y+=3; doc.setFontSize(8); doc.setFont("helvetica","normal");
+  }
+  function pagina(c){ ctx=c; if(!primeira) doc.addPage(); primeira=false; cabecalho(); }
+  function garante(hh){ if(y+hh>BOT){ doc.addPage(); cabecalho(); } }
+  function caixa(x,base,marcado){ doc.setLineWidth(.2); doc.rect(x,base-2.5,2.6,2.6); if(marcado){ doc.setLineWidth(.45); doc.line(x+.5,base-2,x+2.1,base-.4); doc.line(x+2.1,base-2,x+.5,base-.4); doc.setLineWidth(.25);} }
+  function flow(tokens,x,y0,w,draw){
+    const lh=3.6; let cx=x, cy=y0;
+    for(const k of tokens){
+      doc.setFont("helvetica",k.b?"bold":"normal");
+      const tw=doc.getTextWidth(k.t)+(k.cb!==undefined?3.4:0);
+      if(cx>x && cx+tw>x+w){ cx=x; cy+=lh; }
+      if(draw){ if(k.cb!==undefined){ caixa(cx,cy,k.cb); doc.text(k.t,cx+3.4,cy); } else doc.text(k.t,cx,cy); }
+      cx+=tw+(k.cb!==undefined?2.4:1.1);
+    }
+    doc.setFont("helvetica","normal");
+    return cy-y0+lh;
+  }
+  const palavras=s=>txt(s).split(/\s+/).filter(Boolean).map(t=>({t}));
+  function tokens(f,d){
+    const mostra=!f.se||f.se(d), v=d[f.k], t=[{t:txt(f.l)+":",b:1}];
+    if(f.t==="radio"||f.t==="yn"||f.t==="check"){ for(const o of (f.t==="yn"?YN:f.op)) t.push({t:txt(o),cb:mostra&&(Array.isArray(v)?v.includes(o):v===o)}); }
+    else { let s=mostra&&v?v:(f.opt&&mostra?"não informado":"-"); if(f.t==="date"&&v&&mostra) s=fmtD(v); if(f.u&&v&&mostra) s+=" "+f.u; t.push(...palavras(s)); }
+    return t;
+  }
+  function secao(t){ garante(14); doc.setFillColor(226,233,235); doc.rect(M,y,W,5.5,"FD"); doc.setFont("helvetica","bold"); doc.setFontSize(8.5); doc.text(txt(t.toUpperCase()),M+2,y+3.9); doc.setFontSize(8); doc.setFont("helvetica","normal"); y+=5.5; }
+  function grade(campos,d){
+    campos=campos.filter(f=>f.pdf!==false);
+    const pad=1.2, cw=W/2; let i=0;
+    while(i<campos.length){
+      const row=[campos[i++]]; if(row[0].w && i<campos.length && campos[i].w) row.push(campos[i++]);
+      const ws=row.length===2?[cw,cw]:[W];
+      const hs=row.map((f,j)=>flow(tokens(f,d),0,0,ws[j]-2*pad,false));
+      const rh=Math.max(...hs)+2*pad-.4;
+      garante(rh);
+      let x=M; row.forEach((f,j)=>{ doc.rect(x,y,ws[j],rh); flow(tokens(f,d),x+pad,y+pad+2.4,ws[j]-2*pad,true); x+=ws[j]; });
+      y+=rh;
+    }
+    y+=2;
+  }
+  function imagemEm(data,fmt,x,yy,bw,bh,iw,ih){ const s=Math.min(bw/iw,bh/ih); const w=iw*s, hh=ih*s; doc.addImage(data,fmt,x+(bw-w)/2,yy+(bh-hh)/2,w,hh); }
+  function gradeFotos(lista){
+    const cols=2, gap=4, cw=(W-gap)/2, area=BOT-y-2, chh=(area-gap)/2;
+    lista.forEach((f,i)=>{
+      const x=M+(i%2)*(cw+gap), yy=y+Math.floor(i/2)*(chh+gap);
+      doc.setDrawColor(150); doc.rect(x,yy,cw,chh); doc.setDrawColor(40);
+      const capH=9;
+      if(f.foto) imagemEm(f.foto.data,"JPEG",x+1,yy+1,cw-2,chh-capH-2,f.foto.w,f.foto.h);
+      doc.setFont("helvetica","bold"); doc.text(txt(f.l),x+2,yy+chh-5.3);
+      doc.setFont("helvetica","normal"); doc.setFontSize(7);
+      doc.text(txt(f.foto?`${fmtDT(f.foto.ts)} · ${f.foto.gps?gpsTxt(f.foto.gps):"sem localização"} · ${f.foto.por}`:"Não tirada (opcional)"),x+2,yy+chh-1.8);
+      doc.setFontSize(8);
+    });
+  }
+
+  OS.itens.forEach((it,i)=>{
+    const X=it.final||it, d=X.campos;
+    // página 1: cliente, logística e ficha técnica
+    pagina({item:i,titulo:"Ficha técnica",pagina:1});
+    secao("Cliente"); grade(PEDIDO[1].campos,P);
+    secao("Logística da obra"); grade(PEDIDO[2].campos,P);
+    secao("Identificação do item");
+    grade([{k:"a",l:"Ambiente",t:"text",w:1},{k:"b",l:"Tipologia",t:"text",w:1}],{a:d.ambiente,b:tipoTxt(d)});
+    for(const s of ITEM.filter(s=>s.pg===1)){ secao(s.titulo); grade(s.campos,d); }
+    // página 2: ficha técnica (cont.) e desenho
+    pagina({item:i,titulo:"Vão, remoção e desenho",pagina:2});
+    for(const s of ITEM.filter(s=>s.pg===2)){ secao(s.titulo); grade(s.campos,d); }
+    secao("Desenho");
+    const boxH=Math.max(60,BOT-y);
+    if(y+boxH>BOT){ doc.addPage(); cabecalho(); }
+    doc.rect(M,y,W,boxH);
+    doc.setFont("helvetica","bold"); doc.text("Ambiente:",M+3,y+5.5); doc.setFont("helvetica","normal"); doc.text(txt(d.ambiente),M+18,y+5.5);
+    doc.setFont("helvetica","bold"); doc.text("Tipologia:",M+3,y+10); doc.setFont("helvetica","normal"); doc.text(txt(tipoTxt(d)),M+18.5,y+10);
+    const L=+d.largura, A=+d.altura, ar=Math.max(.25,Math.min(4,L/A));
+    const cvW=ar>=1?1000:Math.round(1000*ar), cvH=ar>=1?Math.round(1000/ar):1000;
+    const cv=document.createElement("canvas"); cv.width=cvW; cv.height=cvH; drawTipo(cv,d.tipologia,{bg:"#ffffff"});
+    const cq=X.croqui;
+    const dx=M+20, dy=y+16, dw=(cq?W/2:W)-40, dh=boxH-34;
+    if(cq){ const cx=M+W/2; doc.setDrawColor(170); doc.line(cx,y+14,cx,y+boxH-2); doc.setDrawColor(40);
+      doc.setFont("helvetica","bold"); doc.text(it.final&&OS.remedicao?"Croqui do remedidor":"Croqui",cx+4,y+18); doc.setFont("helvetica","normal");
+      doc.setFontSize(7); doc.text(txt(`${cq.por} · ${fmtDT(cq.ts)}`),cx+4,y+22); doc.setFontSize(8);
+      imagemEm(cq.data,cq.tipo==="foto"?"JPEG":"PNG",cx+3,y+25,W/2-6,boxH-30,cq.w,cq.h); }
+    const s=Math.min(dw/cvW,dh/cvH), iw=cvW*s, ih=cvH*s, ix=dx+(dw-iw)/2, iy=dy+(dh-ih)/2;
+    doc.addImage(cv.toDataURL("image/png"),"PNG",ix,iy,iw,ih);
+    doc.setLineWidth(.2); doc.line(ix,iy+ih+4,ix+iw,iy+ih+4); doc.line(ix,iy+ih+2.5,ix,iy+ih+5.5); doc.line(ix+iw,iy+ih+2.5,ix+iw,iy+ih+5.5);
+    doc.text(txt(`L = ${L} mm${d.acrescimo==="Sim"?` (+${d.folgaL})`:""}`),ix+iw/2,iy+ih+8.5,{align:"center"});
+    doc.line(ix+iw+4,iy,ix+iw+4,iy+ih); doc.line(ix+iw+2.5,iy,ix+iw+5.5,iy); doc.line(ix+iw+2.5,iy+ih,ix+iw+5.5,iy+ih);
+    { const ta=txt(`A = ${A} mm${d.acrescimo==="Sim"?` (+${d.folgaA})`:""}`); doc.text(ta,ix+iw+9,iy+ih/2+doc.getTextWidth(ta)/2,{angle:90}); }
+    doc.setFont("helvetica","bold"); doc.text(txt(`LADO ${String(d.vista||"").toUpperCase()}`),M+(cq?W/4:W/2),y+boxH-3,{align:"center"}); doc.setFont("helvetica","normal");
+    y+=boxH;
+    // página 3: fotos
+    pagina({item:i,titulo:"Fotos",pagina:3});
+    gradeFotos(FOTOS.map(f=>({l:f.l,foto:X.fotos[f.k]})));
+    if(X.extras.length){ pagina({item:i,titulo:"Fotos (extras)",pagina:3}); gradeFotos(X.extras.map((f,j)=>({l:`Foto extra ${j+1}`,foto:f}))); }
+    // página 4: observações e rastreabilidade
+    pagina({item:i,titulo:"Observações",pagina:4});
+    secao("Observações");
+    const colW=W/2-1, pad=2; const ob=[["Observações responsabilidade cliente:",d.obsCliente],["Observações responsabilidade Atenua:",d.obsAtenua]];
+    const linhas=ob.map(([a,b])=>doc.splitTextToSize(txt(b),colW-2*pad));
+    const oh=Math.max(40,Math.max(...linhas.map(l=>l.length))*3.9+12);
+    ob.forEach(([a],j)=>{ const x=M+j*(W/2); doc.rect(x,y,W/2,oh); doc.setFont("helvetica","bold"); doc.text(a,x+pad,y+5); doc.setFont("helvetica","normal"); doc.text(linhas[j],x+pad,y+10); });
+    y+=oh+3;
+    doc.setFontSize(7.5); doc.text("É obrigatório o preenchimento de todos os itens deste documento, a liberação do pedido no prazo depende do preenchimento total da O.S",M+W/2,y+2,{align:"center",maxWidth:W}); doc.setFontSize(8); y+=7;
+    secao("Rastreabilidade");
+    const fotosTodas=[...FOTOS.map(f=>X.fotos[f.k]),...X.extras].filter(Boolean);
+    const comGps=fotosTodas.filter(f=>f.gps).length;
+    const ras=[
+      {k:"r1",l:"OS emitida por",t:"text",w:1},{k:"r2",l:"Data e hora da emissão",t:"text",w:1},
+      {k:"r3",l:"Local da emissão",t:"text"},
+      {k:"r4",l:"Rascunho criado por",t:"text",w:1},{k:"r5",l:"Fotos com localização",t:"text",w:1},
+    ];
+    const rm=OS.remedicao, lb=OS.liberacao;
+    if(rm) ras.push({k:"r6",l:"Remedido por",t:"text",w:1},{k:"r7",l:"Local da remedição",t:"text",w:1});
+    if(lb) ras.push({k:"r8",l:"Liberada para projeto",t:"text"});
+    if(OS.pedidoVenda) ras.push({k:"r9",l:"Pedido de venda",t:"text"});
+    grade(ras,{r1:em.por,r2:fmtDT(em.em),r3:em.gps?gpsTxt(em.gps):em.gpsErro,r4:OS.criadaEm?`${OS.criadaEm.por} em ${fmtDT(OS.criadaEm.em)}`:em.por,r5:`${comGps} de ${fotosTodas.length}`,r6:rm?`${rm.por} em ${fmtDT(rm.em)}`:"",r7:rm?(rm.gps?gpsTxt(rm.gps):rm.gpsErro):"",r8:lb?`${fmtDT(lb.em)} · ${lb.motivo}`:"",r9:OS.pedidoVenda?`${OS.pedidoVenda.arquivo} · conferência: ${OS.conferencia?(OS.conferencia.diferencas.length?OS.conferencia.diferencas.length+" diferença(s), justificadas":"confere")+((OS.conferencia.avisos||[]).length?" · prazo não conta da medição":""):"-"}`:""});
+    if(rm&&it.remed&&it.remed.campos.obsRemed){ secao("Observações do remedidor"); grade([{k:"o",l:"Observações técnicas",t:"text"}],{o:it.remed.campos.obsRemed}); }
+  });
+  const tot=doc.getNumberOfPages();
+  for(let p=1;p<=tot;p++){
+    doc.setPage(p); doc.setFontSize(6.8); doc.setTextColor(90);
+    doc.text(txt(`Emitida por ${em.por} em ${fmtDT(em.em)} · ${em.gps?gpsTxt(em.gps):em.gpsErro}${OS.remedicao&&OS.status==="liberada"?" · versão para projeto (dados do remedidor)":""}${OS.exemplo?" · DADOS DE EXEMPLO":""}`),M,291);
+    doc.setFont("helvetica","bold"); doc.setTextColor(20); doc.setFontSize(8); doc.text(`Página ${p} de ${tot}`,M+W,291,{align:"right"}); doc.setFont("helvetica","normal");
+  }
+  return doc;
+}
+
+/* ---------- exemplo ---------- */
+function fotoExemplo(legenda,tipo){
+  const cv=document.createElement("canvas"); cv.width=1024; cv.height=768; const x=cv.getContext("2d");
+  const g=x.createLinearGradient(0,0,0,768); g.addColorStop(0,"#d9d4cb"); g.addColorStop(1,"#b9b2a6"); x.fillStyle=g; x.fillRect(0,0,1024,768);
+  x.fillStyle="#9b9486"; x.fillRect(0,640,1024,128);
+  x.fillStyle="#2b3a40"; x.fillRect(250,150,524,460); x.fillStyle="#cfe6ea"; x.fillRect(270,170,484,420);
+  x.strokeStyle="#e8c21c"; x.lineWidth=14; x.beginPath(); if(tipo==="h"){x.moveTo(250,620);x.lineTo(774,620);} else if(tipo==="v"){x.moveTo(790,150);x.lineTo(790,610);} else if(tipo==="p"){x.moveTo(200,650);x.lineTo(824,650);} x.stroke();
+  x.fillStyle="#1b2a30"; x.font="700 44px sans-serif"; x.textAlign="center"; x.fillText("FOTO DE EXEMPLO",512,90);
+  const ts=new Date(); const pos={lat:-23.56331,lon:-46.68925,acc:8};
+  x.textAlign="left"; carimbo(x,1024,768,`${legenda} · ${fmtDT(ts)} · ${gpsTxt(pos)} · ${S.user.nome}`);
+  return {data:cv.toDataURL("image/jpeg",.72),w:1024,h:768,ts:ts.toISOString(),gps:pos,gpsErro:null,por:S.user.nome};
+}
+function pedidoExemplo(){
+  const hoje=new Date().toISOString().slice(0,10);
+  const item=(n,q,modelo,medidas,L,aL,A,aA,cor,tip,pers)=>({n,qtde:q,descricao:"JANELA TERMOACÚSTICA SOBREPOSTA",linha:"EXCELLENCE",modelo,vidros:undefined,vidro:"8MM LAMINADO INCOLOR",cor,instalacao:"SOBREPOSTA",medidas,refilamento:"NÃO",calco:"SIM",posFolhas:"PADRÃO",concha:"PADRÃO",
+    largura:L,acrescL:aL,altura:A,acrescA:aA,fixacao:"Sobreposta",tipologia:tip,persiana:pers?"Sim":"Não",acionamento:pers?"Controle":"",ral:"9005F"});
+  return {numero:"6165",revisao:false,dataPedido:hoje,vendedor:S.user.nome,
+    cliente:{codigo:"0001",nome:"MARINA EXEMPLO DUARTE",endereco:"RUA DAS ACÁCIAS, 120, APTO 54",bairro:"JARDIM EXEMPLO",cidade:"SÃO PAULO",uf:"SP",cep:"05678010",telefone:"(11)99999-0000",contato:"MARINA",email:"MARINA@EXEMPLO.COM.BR",telefoneContato:"(11)99999-0000"},
+    entrega:null,totalPecas:2,
+    prazo:{min:25,max:30,marco:"REMEDIÇÃO",texto:"25 A 30 DIAS ÚTEIS APÓS REMEDIÇÃO",aposMedicao:true,remedicao:true},avisos:[],
+    itens:[item(1,1,"2 FOLHAS DE CORRER C/ PERSIANA INTEGRADA MOTORIZADA ACIONADA POR CONTROLE REMOTO","2050+90 X 1720+90",2050,90,1720,90,"PINTURA ELETROSTÁTICA PRETO RAL9005F","Correr 2 folhas",true),
+           item(2,1,"4 FOLHAS DE CORRER","3400+90 X 2300+90",3400,90,2300,90,"PINTURA ELETROSTÁTICA PRETO RAL9005F","Correr 4 folhas",false)]};
+}
+function preencherExemplo(){
+  const hoje=new Date().toISOString().slice(0,10);
+  if(!OS||OS.status!=="rascunho") OS=novaOS();
+  OS.exemplo=true; OS.aceite={nome:"",assinatura:null};
+  aplicarPedidoVenda(pedidoExemplo(),"Pedido de exemplo.pdf");
+  Object.assign(OS.pedido,{referencia:"Em frente à praça",estac:"Não",zonaAzul:"Sim",vaga:"Não",infoInst:"Não",epi:"Não",local:["Prédio","Ocupado"],acesso:["Elevador","Escada"]});
+  const resto={vista:"Externo",dataMed:hoje,respMed:S.user.nome,afastar:"65",pintExt:"Não",posicao:"Interno",portaGiro:"Não",materialVao:"Alvenaria",contramarco:"Sem contramarco",
+    acess:"Não",embalagem:"Simples",marco:"Marco desmontado",forn:["Nenhum"],remocao:"Não",rodape:"Não",empecilho:"Não tem empecilho",obsCliente:"Nenhuma",obsAtenua:"Nenhuma"};
+  const [it1,it2]=OS.itens;
+  Object.assign(it1.campos,resto,{ambiente:"Quarto do bebê",volt:"220v",ponto:"Direito",obsAtenua:"Combinado com a cliente que pode ser necessário colocar mão francesa, se o projeto indicar. Já está alinhado."});
+  Object.assign(it2.campos,resto,{ambiente:"Sala"});
+  for(const it of OS.itens){ it.fotos={frente:fotoExemplo("Vão inteiro, de frente"),largura:fotoExemplo("Trena na largura","h"),altura:fotoExemplo("Trena na altura","v"),piso:fotoExemplo("Piso / soleira do vão","p")}; }
+  it1.croqui={tipo:"desenho",exemploStrokes:true,strokes:[{tool:"text",x:330,y:70,t:"1025"},{tool:"text",x:570,y:70,t:"1025"},{tool:"text",x:450,y:30,t:"caixa da persiana em cima"},{tool:"text",x:450,y:575,t:"motor lado direito"},{tool:"pen",pts:[[700,480],[760,520],[740,470]]}]};
+  { const sc=secCroqui(it1); sc.atualizarBase(); }
+  S.view="resumo"; salvar(); render(); scrollTo(0,0); toast("Exemplo montado a partir de um pedido com 2 peças");
+}
+
+/* ---------- início ---------- */
+(async()=>{
+  const r=await Store.get("estado");
+  if(r){ LISTA=r.lista||[]; S.user=r.user||null; S.editItem=r.editItem||null; OS=LISTA.find(o=>o.id===r.osId)||null; S.view=S.user?(r.view||"lista"):"login"; }
+  render();
+})();
+</script>
+
+</body></html>
