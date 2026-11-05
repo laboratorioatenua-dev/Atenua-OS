@@ -662,7 +662,7 @@ function salvar(){ clearTimeout(saveT); saveT=setTimeout(()=>{ marcarAlteradas()
 function mexeu(){ if(OS){ OS.atualizadaEm=new Date().toISOString(); if(OS.status==="rascunho") OS.emitida=null; } salvar(); }
 
 /* ---------- nuvem: guarda as OS no servidor (Google Planilha + Drive) ---------- */
-const SERVIDOR = "https://script.google.com/macros/s/AKfycby3XNe-hXO17SoZQUHHxfJd1G_fnSqIyeeeXYyCTaOyEOhKzn293KBlWHjA0AukxYV-XQ/exec";
+const SERVIDOR = "";
 const NUVEM = /^https?:\/\//.test(SERVIDOR);
 const SYNC = { pend:new Set(), base:new Map(), estado:"ok", timer:null, puxadoEm:0, puxando:false };
 async function api(acao,dados={}){
