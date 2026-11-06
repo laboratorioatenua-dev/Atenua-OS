@@ -1497,7 +1497,7 @@ function aplicarPedidoVenda(p,arquivo){
   OS.pedido={}; OS.travados=[];
   for(const [k,v] of Object.entries(r.pedido)) if(v!==""&&v!=null){ OS.pedido[k]=v; OS.travados.push(k); }
   OS.itens=r.itens.map(x=>{ const it=novoItem(); it.origem=x.origem; it.travados=[];
-    const cp=x.campos.cor?corPartes(x.campos.cor):{}; const campos={...x.campos,...cp,...fechoDe(x.campos.concha)}; if(cp.corTipo) campos.cor=corTxt(campos); if(campos.fecho) campos.concha=fechoTxt(campos);
+    const cp=x.campos.cor?corPartes(x.campos.cor):{}; const campos={...x.campos,...cp}; if(cp.corTipo) campos.cor=corTxt(campos); delete campos.concha; // o fecho é sempre escolhido pelo vendedor (o pedido só diz "concha"/"padrão")
     for(const [k,v] of Object.entries(campos)) if(v!==""&&v!=null){ it.campos[k]=v; if(TRAVA_ITEM.includes(k)&&!(k==="tipologia"&&v==="Outra")) it.travados.push(k); }
     return it; });
   OS.pedidoVenda={arquivo,lidoEm:new Date().toISOString(),por:S.user.nome,dados:p};
@@ -1548,6 +1548,7 @@ function telaConferencia(main){
   // conferência automática com o pedido de venda
   let res=null;
   if(o.pedidoVenda&&window.ConferenciaPedido){ try{ res=ConferenciaPedido.conferir(o.pedidoVenda.dados,o,{toleranciaMM:TOL_MM}); }catch(e){ console.error(e); } }
+  if(res) res.linhas=res.linhas.filter(l=>l.campo!=="Concha"); // fecho não vem do pedido
   const problemas=res?res.linhas.filter(l=>l.status==="diverge"||l.status==="falta"):[];
   // prazo contado de outro marco não trava: há vendas medidas antes de fechar o pedido
   const avisosPrazo=res?res.bloqueios.filter(b=>/prazo/i.test(b)):[];
@@ -1800,7 +1801,7 @@ function preencherExemplo(){
   OS.exemplo=true; OS.aceite={nome:"",assinatura:null};
   aplicarPedidoVenda(pedidoExemplo(),"Pedido de exemplo.pdf");
   Object.assign(OS.pedido,{referencia:"Em frente à praça",estac:"Não",zonaAzul:"Sim",vaga:"Não",infoInst:"Não",epi:"Não",local:["Prédio","Ocupado"],acesso:["Elevador","Escada"]});
-  const resto={vista:"Externo",dataMed:hoje,respMed:S.user.nome,afastar:"65",pintExt:"Não",posicao:"Interno",portaGiro:"Não",materialVao:"Alvenaria",contramarco:"Sem contramarco",
+  const resto={fecho:"Concha com trava e mola",concha:"Concha com trava e mola",vista:"Externo",dataMed:hoje,respMed:S.user.nome,afastar:"65",pintExt:"Não",posicao:"Interno",portaGiro:"Não",materialVao:"Alvenaria",contramarco:"Sem contramarco",
     acess:"Não",embalagem:"Simples",marco:"Marco desmontado",forn:["Nenhum"],remocao:"Não",rodape:"Não",empecilho:"Não tem empecilho",obsCliente:"Nenhuma",obsAtenua:"Nenhuma"};
   const [it1,it2]=OS.itens;
   Object.assign(it1.campos,resto,{ambiente:"Quarto do bebê",volt:"220v",ponto:"Direito",obsAtenua:"Combinado com a cliente que pode ser necessário colocar mão francesa, se o projeto indicar. Já está alinhado."});
