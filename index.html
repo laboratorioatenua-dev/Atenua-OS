@@ -94,8 +94,16 @@ textarea{min-height:80px;resize:vertical}
 .errs a{color:var(--danger);font-weight:600;text-decoration:underline;cursor:pointer}
 .ostype{display:inline-block;padding:1px 8px;border-radius:4px;color:#1b2a30;font-weight:600;font-size:13px}
 .sig{width:100%;height:auto;aspect-ratio:3/1;max-width:100%;border:1px solid var(--line);border-radius:8px;background:#fff;touch-action:none}
-.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:8px;font-weight:600;z-index:20;max-width:calc(100% - 32px);text-align:center}
+.toast{position:fixed;left:50%;bottom:calc(136px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:8px;font-weight:600;z-index:20;max-width:calc(100% - 32px);text-align:center}
 .done{border-color:var(--ok);background:var(--ok-soft)}
+.fab{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(80px + env(safe-area-inset-bottom,0px));z-index:6;border-radius:999px;min-height:44px;padding:8px 16px;background:var(--surface);border:1px solid var(--accent);color:var(--accent);font-weight:700;box-shadow:0 2px 10px rgba(0,0,0,.18)}
+.modal-bg{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;padding:16px}
+.modal{background:var(--surface);color:var(--fg);border-radius:12px;width:100%;max-width:520px;max-height:calc(100% - 32px);overflow:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+.modal textarea{min-height:120px}
+.modal button.check{flex:1;min-height:44px;border:2px solid var(--accent);background:transparent;color:var(--accent);font-weight:700;border-radius:999px}
+.modal .row>button{flex:1}
+.modal button.check.on{background:var(--accent);color:#fff}
+@media (min-width:700px){.modal-bg{align-items:center}}
 .login{max-width:420px;width:100%;margin:8vh auto 0}
 .login img{width:180px;max-width:100%}
 .cq{position:relative;width:100%;max-width:100%;aspect-ratio:3/2;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff}
@@ -942,8 +950,10 @@ const app=$("#app");
 function render(){
   app.replaceChildren();
   document.querySelectorAll(".bar").forEach(b=>b.remove());
+  document.querySelectorAll(".fab").forEach(b=>b.remove());
   if(S.view==="login") return telaLogin();
   app.append(topo());
+  document.body.append(h("button",{type:"button",class:"fab",onclick:abrirSugestao,"aria-label":"Enviar erro ou sugestão"},"Erro ou sugestão"));
   const main=h("main",{});
   app.append(main);
   if(S.view!=="lista"&&S.view!=="anexar"&&!OS) S.view="lista";
@@ -966,6 +976,40 @@ function topo(){
     NUVEM?h("span",{id:"sync",class:"chip dot ok",role:"status"},"Salvo na nuvem"):null,
     h("div",{class:"who"},S.user.nome,h("br"),h("button",{type:"button",class:"ghost small",style:"min-height:32px;padding:2px 0;border:0;color:var(--accent)",onclick:()=>{ if(NUVEM&&SYNC.pend.size&&!confirm("Ainda há OS sem enviar para a nuvem. Se sair agora, elas continuam só neste aparelho até você entrar de novo. Sair mesmo assim?")) return; S.user=null; S.token=null; OS=null; S.view="login"; salvar(); render(); }},"Sair"))));
 }
+/* ---------- erros e sugestões (vão para a aba Sugestoes da planilha) ---------- */
+let SUGESTOES=[]; // fila no aparelho até a nuvem confirmar
+const TELA_NOME={lista:"Lista de OS",anexar:"Anexar pedido",pedido:"Dados do pedido",item:"Item",resumo:"Resumo",conferencia:"Conferência",remedicao:"Remedição",ritem:"Remedição de item",os:"Detalhe da OS"};
+function abrirSugestao(){
+  const tipo={v:"Erro"}; const err=h("div",{class:"err"});
+  const bts=["Erro","Sugestão"].map(t=>h("button",{type:"button",class:"check"+(t===tipo.v?" on":""),"aria-pressed":String(t===tipo.v),onclick:e=>{ tipo.v=t; bts.forEach(b=>{ const on=b.textContent===t; b.classList.toggle("on",on); b.setAttribute("aria-pressed",String(on)); }); }},t));
+  const txt=h("textarea",{id:"i-sugestao",placeholder:"Conte o que aconteceu ou o que poderia melhorar",oninput:()=>{ err.textContent=""; }});
+  const fechar=()=>bg.remove();
+  const enviarBt=h("button",{type:"button",class:"primary",onclick:async()=>{
+    const t=txt.value.trim(); if(t.length<3){ err.textContent="Escreva o erro ou a sugestão."; txt.focus(); return; }
+    SUGESTOES.push({id:Math.random().toString(36).slice(2,10),em:new Date().toISOString(),tipo:tipo.v,texto:t,tela:TELA_NOME[S.view]||S.view,pedido:OS&&OS.pedido&&OS.pedido.numPedido||"",aparelho:navigator.userAgent.slice(0,180)});
+    Store.set("sugestoes",SUGESTOES); fechar();
+    const ok=await enviarSugestoes();
+    toast(ok?"Obrigado! Recebemos sua mensagem.":"Guardado no aparelho. Será enviado quando houver internet.");
+  }},"Enviar");
+  const bg=h("div",{class:"modal-bg",onclick:e=>{ if(e.target===bg) fechar(); }},
+    h("div",{class:"modal",role:"dialog","aria-modal":"true","aria-label":"Erro ou sugestão"},
+      h("h2",{style:"margin:0"},"Erro ou sugestão"),
+      h("div",{class:"small muted"},`Vai para a planilha com seu nome${OS&&OS.pedido.numPedido?`, o pedido ${OS.pedido.numPedido}`:""} e a tela em que você está.`),
+      h("div",{class:"row"},bts),
+      h("div",{class:"field"},h("label",{for:"i-sugestao"},"Mensagem"),txt),
+      err,
+      h("div",{class:"row"},h("button",{type:"button",onclick:fechar},"Cancelar"),enviarBt)));
+  document.body.append(bg); txt.focus();
+}
+async function enviarSugestoes(){
+  if(!NUVEM||!S.token||!SUGESTOES.length) return false;
+  try{
+    while(SUGESTOES.length){ await api("sugestao",{sugestao:SUGESTOES[0]}); SUGESTOES.shift(); Store.set("sugestoes",SUGESTOES); }
+    return true;
+  }catch(e){ console.error(e); if(e.codigo==="sessao") sessaoExpirada(); return false; }
+}
+addEventListener("online",()=>enviarSugestoes());
+
 /* ---------- app instalável (PWA) ---------- */
 const INSTALADO=()=>matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
 let PEDIDO_INSTALAR=null;
@@ -1758,6 +1802,7 @@ function preencherExemplo(){
 (async()=>{
   const r=await Store.get("estado");
   if(r){ LISTA=r.lista||[]; S.user=r.user||null; S.token=r.token||null; S.editItem=r.editItem||null; OS=LISTA.find(o=>o.id===r.osId)||null; S.view=S.user?(r.view||"lista"):"login"; (r.pendentes||[]).forEach(id=>SYNC.pend.add(id)); }
+  SUGESTOES=(await Store.get("sugestoes"))||[]; if(SUGESTOES.length) setTimeout(enviarSugestoes,3000);
   if(NUVEM){ const us=await Store.get("usuarios"); if(us&&us.length) USUARIOS.splice(0,USUARIOS.length,...us); if(S.user&&!S.token){ S.user=null; S.view="login"; } }
   for(const o of LISTA) if(!SYNC.pend.has(o.id)&&o._nuvem) SYNC.base.set(o.id,JSON.stringify(o));
   render();
