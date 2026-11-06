@@ -1479,7 +1479,18 @@ function exemploRemedicao(){
 /* ---------- pedido de venda: anexar, montar a OS, conferir ---------- */
 const TRAVA_ITEM=["tipologia","largura","altura","acrescimo","folgaL","folgaA","calco","linha","vidro","corTipo","corRal","corAnod","corBrilho","posFolhas","fecho","fechoOutro","persiana","acion","fixacao"];
 function fmtCampo(f,d){ const v=d[f.k]; if(v==null||v===""||(Array.isArray(v)&&!v.length)) return ""; if(f.t==="date") return fmtD(v); if(Array.isArray(v)) return v.join(", "); return f.u?`${v} ${f.u}`:String(v); }
+// formato "ATÉ 5 DIAS ÚTEIS PARA REMEDIÇÃO, APÓS REMEDIÇÃO 30 A 35 DIAS ÚTEIS PARA INSTALAÇÃO": completa a faixa e o marco
+function ajustarPrazo(p){
+  const pz=p&&p.prazo; if(!pz||pz.max||!pz.texto) return;
+  const u=String(pz.texto).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase();
+  const m=/(\d{1,3})\s*(?:A|ATE|-)\s*(\d{1,3})\s*DIAS\s*(?:UTEIS\s*)?PARA\s*(?:A\s*)?INSTALA/.exec(u)||/(\d{1,3})()\s*DIAS\s*(?:UTEIS\s*)?PARA\s*(?:A\s*)?INSTALA/.exec(u);
+  if(!m) return;
+  const mk=/APOS\s*(?:A\s*)?(?:DATA\s*DA\s*)?((?:RE)?MEDICAO|[A-Z ]+?)(?=\s*\d|,|\.|$)/.exec(u.slice(0,m.index+1)+" ")||/APOS\s*(?:A\s*)?(?:DATA\s*DA\s*)?((?:RE)?MEDICAO)/.exec(u);
+  pz.min=+m[1]; pz.max=+(m[2]||m[1]); pz.marco=mk?mk[1].trim():"";
+  pz.aposMedicao=/^(RE)?MEDICAO$/.test(pz.marco);
+}
 function aplicarPedidoVenda(p,arquivo){
+  ajustarPrazo(p);
   const r=ConferenciaPedido.preencherOS(p);
   // prazo fora do padrão "X a Y dias úteis após ...": usa o maior número de dias citado (ex.: "45 DIAS ÚTEIS PARA O BRANCO, 70 ÚTEIS PARA O CINZA")
   if(!r.pedido.prazo&&p.prazo&&p.prazo.texto){ const ns=[...String(p.prazo.texto).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().matchAll(/(\d{1,3})\s*(?:DIAS|UTEIS)/g)].map(m=>+m[1]).filter(n=>n>0&&n<=365); if(ns.length) r.pedido.prazo=String(Math.max(...ns)); }
