@@ -712,10 +712,15 @@ async function enviar(){
   }
   salvarLocal(); mostrarSync();
 }
+// lista de pessoas da aba Usuarios: recarregada sempre, para valer na hora quem distribui as OS rosa
+async function atualizarUsuarios(){
+  try{ const r=await api("usuarios"); if(r.usuarios&&r.usuarios.length){ USUARIOS.splice(0,USUARIOS.length,...r.usuarios); Store.set("usuarios",r.usuarios); } }catch(e){ console.error(e); }
+}
 async function puxar(forcar){
   if(!NUVEM||!S.token||SYNC.puxando) return;
   if(!forcar&&Date.now()-SYNC.puxadoEm<15000) return;
   SYNC.puxando=true;
+  atualizarUsuarios();
   try{
     const {os}=await api("listar");
     const u=S.user, minhas=r=>u.perfil==="auditoria"||(u.perfil==="remedidor"?(r.remedidor===u.nome||(distribui(u)&&r.remedidor&&r.status==="em_remedicao")):r.vendedor===u.nome);
@@ -1255,7 +1260,7 @@ function telaLista(main){
   if(u.perfil==="auditoria"){ const cont={}; LISTA.forEach(o=>cont[o.status]=(cont[o.status]||0)+1);
     main.append(h("div",{class:"row"},Object.keys(STATUS).filter(s=>cont[s]).map(s=>h("span",{class:"chip "+STATUS[s][1]},`${STATUS[s][0]}: ${cont[s]}`)))); }
   if(!l.length) main.append(h("section",{class:"card"},h("div",{class:"muted"},
-    u.perfil==="remedidor"?(distribui(u)?"Nenhuma OS de remedição (rosa) no momento. Todas chegam para você, e você pode passar as que quiser para outro remedidor.":"Nenhuma OS passada para você ainda. As OS de remedição (rosa) chegam para o Remedidor 1, que distribui."):u.perfil==="auditoria"?"Nenhuma OS emitida ainda.":"Você ainda não tem OS. Toque em + Nova OS.")));
+    u.perfil==="remedidor"?(distribui(u)?"Nenhuma OS de remedição (rosa) no momento. Todas chegam para você, e você pode passar as que quiser para outro remedidor.":`Nenhuma OS passada para você ainda. As OS de remedição (rosa) chegam para ${(USUARIOS.find(x=>x.distribui)||{nome:"quem distribui"}).nome}, que distribui.`):u.perfil==="auditoria"?"Nenhuma OS emitida ainda.":"Você ainda não tem OS. Toque em + Nova OS.")));
   if(u.perfil==="remedidor"){ const pend=l.filter(o=>o.status==="pendencias");
     if(pend.length) main.append(h("section",{class:"card warnbox"},h("h2",{},"A confirmar"),
       pend.map(o=>h("div",{class:"row"},h("div",{style:"flex:1;min-width:0"},`Pedido ${o.pedido.numPedido} · ${o.pedido.nome}`,h("div",{class:"small muted"},`${(o.avisos||[]).filter(a=>a.estado==="aberto").length} aviso(s) sem resposta`)),h("button",{type:"button",class:"primary",onclick:()=>abrirOS(o)},"Responder"))))); }
@@ -1608,7 +1613,7 @@ async function emitir(btn){
   OS.emitida=em;
   if(OS.status==="rascunho"){
     hist(OS,"OS emitida pelo vendedor"+(OS.conferencia?(OS.conferencia.diferencas.length?` com ${OS.conferencia.diferencas.length} diferença(s) do pedido. Justificativa: ${OS.conferencia.justificativa}`:" (confere com o pedido de venda)")+((OS.conferencia.avisos||[]).length?". Aviso: prazo do pedido não conta da medição":""):""));
-    if(OS.pedido.tipoOS==="Remedição (O.S Rosa)"){ const d=USUARIOS.find(x=>x.distribui); OS.remedidor=d.nome; OS.status="em_remedicao"; hist(OS,`Remedição enviada automaticamente para ${d.nome}`); }
+    if(OS.pedido.tipoOS==="Remedição (O.S Rosa)"){ if(NUVEM&&S.token) await atualizarUsuarios(); const d=USUARIOS.find(x=>x.distribui&&x.perfil==="remedidor")||USUARIOS.find(x=>x.distribui); OS.remedidor=d.nome; OS.status="em_remedicao"; hist(OS,`Remedição enviada automaticamente para ${d.nome}`); }
     else { OS.status="liberada"; OS.liberacao={por:S.user.nome,em:em.em,motivo:"OS sem remedição: liberada para projeto"}; hist(OS,OS.liberacao.motivo); }
   }
   OS.atualizadaEm=em.em; salvar(); S.view="os"; render(); scrollTo(0,0);
