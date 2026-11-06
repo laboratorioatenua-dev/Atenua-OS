@@ -1481,6 +1481,8 @@ const TRAVA_ITEM=["tipologia","largura","altura","acrescimo","folgaL","folgaA","
 function fmtCampo(f,d){ const v=d[f.k]; if(v==null||v===""||(Array.isArray(v)&&!v.length)) return ""; if(f.t==="date") return fmtD(v); if(Array.isArray(v)) return v.join(", "); return f.u?`${v} ${f.u}`:String(v); }
 function aplicarPedidoVenda(p,arquivo){
   const r=ConferenciaPedido.preencherOS(p);
+  // prazo fora do padrão "X a Y dias úteis após ...": usa o maior número de dias citado (ex.: "45 DIAS ÚTEIS PARA O BRANCO, 70 ÚTEIS PARA O CINZA")
+  if(!r.pedido.prazo&&p.prazo&&p.prazo.texto){ const ns=[...String(p.prazo.texto).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().matchAll(/(\d{1,3})\s*(?:DIAS|UTEIS)/g)].map(m=>+m[1]).filter(n=>n>0&&n<=365); if(ns.length) r.pedido.prazo=String(Math.max(...ns)); }
   OS.pedido={}; OS.travados=[];
   for(const [k,v] of Object.entries(r.pedido)) if(v!==""&&v!=null){ OS.pedido[k]=v; OS.travados.push(k); }
   OS.itens=r.itens.map(x=>{ const it=novoItem(); it.origem=x.origem; it.travados=[];
