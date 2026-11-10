@@ -100,6 +100,10 @@ textarea{min-height:80px;resize:vertical}
 .modal-bg{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;padding:16px}
 .modal{background:var(--surface);color:var(--fg);border-radius:12px;width:100%;max-width:520px;max-height:calc(100% - 32px);overflow:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
 .modal textarea{min-height:120px}
+.abas{display:flex;gap:4px}
+.abas button{flex:1 1 0;min-width:0;min-height:44px;padding:4px 4px;font-size:13px;border:2px solid var(--accent);background:transparent;color:var(--accent);font-weight:700;border-radius:999px;white-space:nowrap}
+.abas button.on{background:var(--accent);color:#fff}
+.abas b{display:inline-block;min-width:18px;margin-left:3px;padding:0 5px;border-radius:999px;background:rgba(0,0,0,.12);font-size:13px}
 .modal button.check{flex:1;min-height:44px;border:2px solid var(--accent);background:transparent;color:var(--accent);font-weight:700;border-radius:999px}
 .modal .row>button{flex:1}
 .modal button.check.on{background:var(--accent);color:#fff}
@@ -1261,10 +1265,16 @@ function telaLista(main){
     main.append(h("div",{class:"row"},Object.keys(STATUS).filter(s=>cont[s]).map(s=>h("span",{class:"chip "+STATUS[s][1]},`${STATUS[s][0]}: ${cont[s]}`)))); }
   if(!l.length) main.append(h("section",{class:"card"},h("div",{class:"muted"},
     u.perfil==="remedidor"?(distribui(u)?"Nenhuma OS de remedição (rosa) no momento. Todas chegam para você, e você pode passar as que quiser para outro remedidor.":`Nenhuma OS passada para você ainda. As OS de remedição (rosa) chegam para ${(USUARIOS.find(x=>x.distribui)||{nome:"quem distribui"}).nome}, que distribui.`):u.perfil==="auditoria"?"Nenhuma OS emitida ainda.":"Você ainda não tem OS. Toque em + Nova OS.")));
-  if(u.perfil==="remedidor"){ const pend=l.filter(o=>o.status==="pendencias");
-    if(pend.length) main.append(h("section",{class:"card warnbox"},h("h2",{},"A confirmar"),
-      pend.map(o=>h("div",{class:"row"},h("div",{style:"flex:1;min-width:0"},`Pedido ${o.pedido.numPedido} · ${o.pedido.nome}`,h("div",{class:"small muted"},`${(o.avisos||[]).filter(a=>a.estado==="aberto").length} aviso(s) sem resposta`)),h("button",{type:"button",class:"primary",onclick:()=>abrirOS(o)},"Responder"))))); }
-  for(const o of l){
+  // abas: com pendências (precisa de ação ou tem problema), em processo, liberadas
+  const GRUPO={aguardando:"pend",pendencias:"pend",divergencia:"pend",rascunho:"proc",em_remedicao:"proc",liberada:"lib"};
+  const grupos={pend:l.filter(o=>GRUPO[o.status]==="pend"),proc:l.filter(o=>(GRUPO[o.status]||"proc")==="proc"),lib:l.filter(o=>GRUPO[o.status]==="lib")};
+  if(!S.aba||(!grupos[S.aba].length&&!S.abaEscolhida)) S.aba=grupos.pend.length?"pend":"proc";
+  const NOME_ABA={pend:"Pendências",proc:"Em processo",lib:"Liberadas"};
+  if(l.length) main.append(h("div",{class:"abas",role:"tablist"},Object.keys(NOME_ABA).map(k=>h("button",{type:"button",role:"tab",class:S.aba===k?"on":"","aria-selected":String(S.aba===k),onclick:()=>{ S.aba=k; S.abaEscolhida=true; render(); }},NOME_ABA[k],h("b",{},String(grupos[k].length))))));
+  const AJUDA={pend:"Aguardando remedidor, avisos de diferença sem resposta ou divergência para validar.",proc:"Rascunhos e OS em remedição.",lib:"OS conferidas e liberadas para projeto."};
+  if(l.length) main.append(h("div",{class:"small muted"},AJUDA[S.aba]));
+  if(l.length&&!grupos[S.aba].length) main.append(h("section",{class:"card"},h("div",{class:"muted"},`Nenhuma OS ${S.aba==="pend"?"com pendências":S.aba==="proc"?"em processo":"liberada"}.`)));
+  for(const o of grupos[S.aba]||[]){
     const P=o.pedido;
     const card=h("section",{class:"card"},
       h("div",{class:"row"},h("h2",{},`Pedido ${P.numPedido||"sem número"}`),h("div",{class:"sp"}),chipStatus(o.status)),
