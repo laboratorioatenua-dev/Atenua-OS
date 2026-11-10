@@ -1,6 +1,6 @@
 // Atenua OS: deixa o app abrir sem internet. A página é buscada na rede primeiro
 // (para receber atualizações) e as bibliotecas do PDF ficam guardadas no aparelho.
-const CACHE = 'atenua-os-v10';
+const CACHE = 'atenua-os-v11';
 const LIBS = [
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
